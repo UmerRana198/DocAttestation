@@ -9,11 +9,11 @@ public class CaptchaService : ICaptchaService
     private readonly ILogger<CaptchaService> _logger;
     private readonly Timer _cleanupTimer;
 
-    // Image dimensions
-    private const int ImageWidth = 300;
-    private const int ImageHeight = 150;
-    private const int PuzzleSize = 44; // Size of puzzle piece
-    private const int PuzzleKnob = 10; // Size of knob
+    // Fixed dimensions
+    private const int ImgWidth = 300;
+    private const int ImgHeight = 150;
+    private const int PieceWidth = 50;
+    private const int PieceHeight = 50;
 
     public CaptchaService(ILogger<CaptchaService> logger)
     {
@@ -25,198 +25,124 @@ public class CaptchaService : ICaptchaService
     {
         var challengeId = Guid.NewGuid().ToString();
         
-        // Random position for puzzle target (leave room for puzzle piece)
-        var targetX = RandomNumberGenerator.GetInt32(100, 220);
-        var puzzleY = RandomNumberGenerator.GetInt32(25, 80);
+        // Random target position (where the hole is)
+        var targetX = RandomNumberGenerator.GetInt32(120, 230);
+        var pieceY = RandomNumberGenerator.GetInt32(30, 70);
         
-        // Select random gradient colors
-        var (color1, color2) = GetRandomGradient();
+        // Random gradient
+        var (c1, c2) = GetRandomGradient();
         
-        // Generate background with cutout hole
-        var backgroundSvg = GenerateBackgroundWithHole(color1, color2, targetX, puzzleY);
-        
-        // Generate matching puzzle piece
-        var puzzlePieceSvg = GeneratePuzzlePiece(color1, color2, targetX, puzzleY);
+        // Generate images
+        var background = CreateBackground(c1, c2, targetX, pieceY);
+        var piece = CreatePiece(c1, c2);
         
         var challenge = new SliderCaptchaChallenge
         {
             ChallengeId = challengeId,
-            BackgroundImage = "data:image/svg+xml;base64," + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(backgroundSvg)),
-            PuzzlePieceImage = "data:image/svg+xml;base64," + Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(puzzlePieceSvg)),
-            PuzzleY = puzzleY,
+            BackgroundImage = ToDataUri(background),
+            PuzzlePieceImage = ToDataUri(piece),
+            PuzzleY = pieceY,
             TargetX = targetX,
             CreatedAt = DateTime.UtcNow
         };
 
         _sliderChallenges[challengeId] = challenge;
-        
-        _logger.LogInformation("Generated slider captcha {ChallengeId} with target at X={TargetX}", challengeId, targetX);
+        _logger.LogInformation("Captcha {Id}: Target X = {X}", challengeId, targetX);
         
         return challenge;
+    }
+
+    private string CreateBackground(string c1, string c2, int holeX, int holeY)
+    {
+        // Simple square hole - matches the piece exactly
+        return $@"<svg xmlns='http://www.w3.org/2000/svg' width='{ImgWidth}' height='{ImgHeight}'>
+  <defs>
+    <linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='{c1}'/>
+      <stop offset='100%' stop-color='{c2}'/>
+    </linearGradient>
+  </defs>
+  <rect width='{ImgWidth}' height='{ImgHeight}' fill='url(#g)'/>
+  <circle cx='60' cy='40' r='25' fill='rgba(255,255,255,0.15)'/>
+  <circle cx='240' cy='110' r='35' fill='rgba(255,255,255,0.1)'/>
+  <circle cx='150' cy='130' r='20' fill='rgba(255,255,255,0.12)'/>
+  <rect x='{holeX}' y='{holeY}' width='{PieceWidth}' height='{PieceHeight}' rx='6' fill='rgba(0,0,0,0.45)'/>
+  <rect x='{holeX}' y='{holeY}' width='{PieceWidth}' height='{PieceHeight}' rx='6' fill='none' stroke='rgba(255,255,255,0.7)' stroke-width='2'/>
+</svg>";
+    }
+
+    private string CreatePiece(string c1, string c2)
+    {
+        // Simple rounded square that matches the hole
+        return $@"<svg xmlns='http://www.w3.org/2000/svg' width='{PieceWidth + 4}' height='{PieceHeight + 4}'>
+  <defs>
+    <linearGradient id='pg' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='{c1}'/>
+      <stop offset='100%' stop-color='{c2}'/>
+    </linearGradient>
+    <filter id='shadow'>
+      <feDropShadow dx='1' dy='1' stdDeviation='2' flood-opacity='0.4'/>
+    </filter>
+  </defs>
+  <rect x='2' y='2' width='{PieceWidth}' height='{PieceHeight}' rx='6' fill='url(#pg)' filter='url(#shadow)'/>
+  <rect x='2' y='2' width='{PieceWidth}' height='{PieceHeight}' rx='6' fill='none' stroke='white' stroke-width='2'/>
+  <circle cx='27' cy='27' r='12' fill='rgba(255,255,255,0.2)'/>
+</svg>";
     }
 
     private (string, string) GetRandomGradient()
     {
         var gradients = new[]
         {
-            ("#667eea", "#764ba2"), // Purple
-            ("#11998e", "#38ef7d"), // Green
-            ("#ee0979", "#ff6a00"), // Red-Orange
-            ("#3494e6", "#ec6ead"), // Blue-Pink
-            ("#f093fb", "#f5576c"), // Pink
-            ("#4facfe", "#00f2fe"), // Cyan
-            ("#43e97b", "#38f9d7"), // Mint
-            ("#fa709a", "#fee140"), // Coral
-            ("#a18cd1", "#fbc2eb"), // Lavender
-            ("#667db6", "#0082c8"), // Blue
+            ("#6366f1", "#8b5cf6"), // Indigo-Purple
+            ("#10b981", "#059669"), // Emerald
+            ("#f59e0b", "#d97706"), // Amber
+            ("#ef4444", "#dc2626"), // Red
+            ("#3b82f6", "#2563eb"), // Blue
+            ("#ec4899", "#db2777"), // Pink
+            ("#14b8a6", "#0d9488"), // Teal
+            ("#8b5cf6", "#7c3aed"), // Violet
+            ("#f97316", "#ea580c"), // Orange
+            ("#06b6d4", "#0891b2"), // Cyan
         };
-        
-        var index = RandomNumberGenerator.GetInt32(0, gradients.Length);
-        return gradients[index];
+        return gradients[RandomNumberGenerator.GetInt32(0, gradients.Length)];
     }
 
-    private string GenerateBackgroundWithHole(string color1, string color2, int holeX, int holeY)
+    private static string ToDataUri(string svg)
     {
-        var patterns = GenerateRandomPatterns();
-        
-        return $@"<svg xmlns='http://www.w3.org/2000/svg' width='{ImageWidth}' height='{ImageHeight}' viewBox='0 0 {ImageWidth} {ImageHeight}'>
-            <defs>
-                <linearGradient id='bgGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
-                    <stop offset='0%' style='stop-color:{color1};stop-opacity:1' />
-                    <stop offset='100%' style='stop-color:{color2};stop-opacity:1' />
-                </linearGradient>
-                <clipPath id='puzzleHole'>
-                    <rect width='{ImageWidth}' height='{ImageHeight}'/>
-                    <path d='{GetPuzzleShapePath(holeX, holeY)}' clip-rule='evenodd'/>
-                </clipPath>
-            </defs>
-            
-            <!-- Main background -->
-            <rect width='{ImageWidth}' height='{ImageHeight}' fill='url(#bgGrad)'/>
-            
-            <!-- Decorative patterns -->
-            {patterns}
-            
-            <!-- Dark overlay where puzzle piece goes (the hole) -->
-            <path d='{GetPuzzleShapePath(holeX, holeY)}' fill='rgba(0,0,0,0.5)'/>
-            
-            <!-- Hole border/outline -->
-            <path d='{GetPuzzleShapePath(holeX, holeY)}' fill='none' stroke='rgba(255,255,255,0.6)' stroke-width='2'/>
-            
-            <!-- Inner shadow effect for depth -->
-            <path d='{GetPuzzleShapePath(holeX + 2, holeY + 2)}' fill='none' stroke='rgba(0,0,0,0.3)' stroke-width='1'/>
-        </svg>";
+        var bytes = System.Text.Encoding.UTF8.GetBytes(svg);
+        return "data:image/svg+xml;base64," + Convert.ToBase64String(bytes);
     }
 
-    private string GeneratePuzzlePiece(string color1, string color2, int sourceX, int sourceY)
-    {
-        // The puzzle piece shows the original background content that was "cut out"
-        var patterns = GenerateRandomPatterns();
-        var pieceWidth = PuzzleSize + PuzzleKnob + 4;
-        var pieceHeight = PuzzleSize + PuzzleKnob + 4;
-        
-        return $@"<svg xmlns='http://www.w3.org/2000/svg' width='{pieceWidth}' height='{pieceHeight}' viewBox='0 0 {pieceWidth} {pieceHeight}'>
-            <defs>
-                <linearGradient id='pieceGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
-                    <stop offset='0%' style='stop-color:{color1};stop-opacity:1' />
-                    <stop offset='100%' style='stop-color:{color2};stop-opacity:1' />
-                </linearGradient>
-                <clipPath id='pieceClip'>
-                    <path d='{GetPuzzleShapePath(2, 2)}'/>
-                </clipPath>
-                <filter id='dropShadow' x='-50%' y='-50%' width='200%' height='200%'>
-                    <feDropShadow dx='2' dy='2' stdDeviation='3' flood-color='rgba(0,0,0,0.4)'/>
-                </filter>
-            </defs>
-            
-            <!-- Puzzle piece with shadow -->
-            <g filter='url(#dropShadow)'>
-                <!-- Background fill for the piece -->
-                <path d='{GetPuzzleShapePath(2, 2)}' fill='url(#pieceGrad)'/>
-                
-                <!-- Some pattern overlay for texture -->
-                <g clip-path='url(#pieceClip)' opacity='0.3'>
-                    <circle cx='25' cy='15' r='12' fill='rgba(255,255,255,0.3)'/>
-                    <circle cx='35' cy='35' r='8' fill='rgba(255,255,255,0.2)'/>
-                </g>
-                
-                <!-- Border -->
-                <path d='{GetPuzzleShapePath(2, 2)}' fill='none' stroke='white' stroke-width='2'/>
-            </g>
-        </svg>";
-    }
-
-    private string GetPuzzleShapePath(int x, int y)
-    {
-        // Create a jigsaw puzzle piece shape with a knob on the right
-        var s = PuzzleSize; // main square size
-        var k = PuzzleKnob; // knob size
-        
-        // Starting from top-left, going clockwise
-        // The shape is a square with a circular knob sticking out on the right side
-        return $@"M{x},{y} 
-                  L{x + s},{y} 
-                  L{x + s},{y + s/2 - k/2} 
-                  C{x + s},{y + s/2 - k/2} {x + s + k},{y + s/2 - k} {x + s + k},{y + s/2} 
-                  C{x + s + k},{y + s/2 + k} {x + s},{y + s/2 + k/2} {x + s},{y + s/2 + k/2} 
-                  L{x + s},{y + s} 
-                  L{x},{y + s} 
-                  L{x},{y + s/2 + k/2} 
-                  C{x},{y + s/2 + k/2} {x - k},{y + s/2 + k} {x - k},{y + s/2} 
-                  C{x - k},{y + s/2 - k} {x},{y + s/2 - k/2} {x},{y + s/2 - k/2} 
-                  Z";
-    }
-
-    private string GenerateRandomPatterns()
-    {
-        var patterns = new System.Text.StringBuilder();
-        var numPatterns = RandomNumberGenerator.GetInt32(4, 8);
-        
-        for (int i = 0; i < numPatterns; i++)
-        {
-            var cx = RandomNumberGenerator.GetInt32(20, 280);
-            var cy = RandomNumberGenerator.GetInt32(20, 130);
-            var r = RandomNumberGenerator.GetInt32(15, 45);
-            var opacity = 0.05 + (RandomNumberGenerator.GetInt32(0, 15) / 100.0);
-            
-            patterns.Append($"<circle cx='{cx}' cy='{cy}' r='{r}' fill='rgba(255,255,255,{opacity:F2})'/>");
-        }
-        
-        return patterns.ToString();
-    }
-
-    public bool ValidateSliderChallenge(string challengeId, int userPosition, int tolerance = 8)
+    public bool ValidateSliderChallenge(string challengeId, int userPosition, int tolerance = 10)
     {
         if (string.IsNullOrEmpty(challengeId))
         {
-            _logger.LogWarning("Empty challenge ID provided");
+            _logger.LogWarning("Empty challenge ID");
             return false;
         }
 
         if (!_sliderChallenges.TryRemove(challengeId, out var challenge))
         {
-            _logger.LogWarning("Slider challenge not found: {ChallengeId}", challengeId);
+            _logger.LogWarning("Challenge not found: {Id}", challengeId);
             return false;
         }
 
-        // Check expiry (2 minutes)
         if ((DateTime.UtcNow - challenge.CreatedAt).TotalMinutes > 2)
         {
-            _logger.LogWarning("Slider challenge expired: {ChallengeId}", challengeId);
+            _logger.LogWarning("Challenge expired: {Id}", challengeId);
             return false;
         }
 
-        // Check if position is within tolerance
         var diff = Math.Abs(userPosition - challenge.TargetX);
-        var isValid = diff <= tolerance;
+        var valid = diff <= tolerance;
+        
+        _logger.LogInformation("Validate: target={T}, user={U}, diff={D}, valid={V}", 
+            challenge.TargetX, userPosition, diff, valid);
 
-        _logger.LogInformation("Slider validation: Expected={Expected}, Got={Got}, Diff={Diff}, Valid={Valid}", 
-            challenge.TargetX, userPosition, diff, isValid);
-
-        return isValid;
+        return valid;
     }
 
-    // Legacy method - redirect to slider captcha
     public CaptchaChallenge GenerateChallenge()
     {
         var slider = GenerateSliderChallenge();
@@ -228,33 +154,25 @@ public class CaptchaService : ICaptchaService
         };
     }
 
-    // Legacy method - validate slider position passed as string
     public bool ValidateChallenge(string answer, string challengeId)
     {
         if (string.IsNullOrEmpty(answer) || string.IsNullOrEmpty(challengeId))
             return false;
-
-        if (!int.TryParse(answer, out var position))
+        if (!int.TryParse(answer, out var pos))
             return false;
-
-        return ValidateSliderChallenge(challengeId, position);
+        return ValidateSliderChallenge(challengeId, pos);
     }
 
     private void CleanupExpiredChallenges(object? state)
     {
-        var expiredKeys = _sliderChallenges
-            .Where(kvp => (DateTime.UtcNow - kvp.Value.CreatedAt).TotalMinutes > 5)
-            .Select(kvp => kvp.Key)
-            .ToList();
+        var expired = _sliderChallenges
+            .Where(x => (DateTime.UtcNow - x.Value.CreatedAt).TotalMinutes > 5)
+            .Select(x => x.Key).ToList();
 
-        foreach (var key in expiredKeys)
-        {
+        foreach (var key in expired)
             _sliderChallenges.TryRemove(key, out _);
-        }
 
-        if (expiredKeys.Count > 0)
-        {
-            _logger.LogInformation("Cleaned up {Count} expired slider captcha challenges", expiredKeys.Count);
-        }
+        if (expired.Count > 0)
+            _logger.LogInformation("Cleaned {Count} expired captchas", expired.Count);
     }
 }

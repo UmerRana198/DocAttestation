@@ -253,20 +253,15 @@
         
         .captcha-puzzle-piece {
             position: absolute;
-            width: 58px;
-            height: 58px;
+            width: 54px;
+            height: 54px;
             left: 0;
-            cursor: grab;
-            transition: left 0.02s linear;
             pointer-events: none;
-        }
-        
-        .captcha-puzzle-piece:active {
-            cursor: grabbing;
+            transition: left 0.01s linear;
         }
         
         .captcha-puzzle-piece.correct {
-            filter: drop-shadow(0 0 8px #28a745);
+            filter: drop-shadow(0 0 6px #28a745);
         }
         
         .slider-track {
