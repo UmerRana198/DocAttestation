@@ -148,7 +148,7 @@ public class AuthController : ControllerBase
         {
             var storedToken = await _jwtService.GetRefreshTokenAsync(request.RefreshToken);
             
-            if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiryDate < DateTime.UtcNow)
+            if (storedToken == null || storedToken.IsRevoked || storedToken.ExpiresAt < DateTime.UtcNow)
             {
                 return Unauthorized(new MobileLoginResponse
                 {
