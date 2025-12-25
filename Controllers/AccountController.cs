@@ -45,13 +45,11 @@ public class AccountController : Controller
     [AllowAnonymous]
     public IActionResult Register()
     {
-        var challenge = _captchaService.GenerateSliderChallenge();
+        var challenge = _captchaService.GenerateChallenge();
         var model = new RegisterViewModel
         {
             CaptchaChallengeId = challenge.ChallengeId,
-            CaptchaBackgroundImage = challenge.BackgroundImage,
-            CaptchaPuzzleImage = challenge.PuzzlePieceImage,
-            CaptchaPuzzleY = challenge.PuzzleY
+            CaptchaImageUrl = challenge.Question
         };
         return View(model);
     }
@@ -61,14 +59,13 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // Validate Slider CAPTCHA
-        if (!int.TryParse(model.CaptchaAnswer, out var sliderPosition) || 
-            !_captchaService.ValidateSliderChallenge(model.CaptchaChallengeId, sliderPosition))
+        // Validate CAPTCHA
+        if (!_captchaService.ValidateChallenge(model.CaptchaAnswer, model.CaptchaChallengeId))
         {
             return Json(new
             {
                 success = false,
-                message = "Slider verification failed. Please try again.",
+                message = "Captcha verification failed. Please try again.",
                 title = "Verification Error"
             });
         }
@@ -223,13 +220,11 @@ public class AccountController : Controller
     public IActionResult Login(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
-        var challenge = _captchaService.GenerateSliderChallenge();
+        var challenge = _captchaService.GenerateChallenge();
         var model = new LoginViewModel
         {
             CaptchaChallengeId = challenge.ChallengeId,
-            CaptchaBackgroundImage = challenge.BackgroundImage,
-            CaptchaPuzzleImage = challenge.PuzzlePieceImage,
-            CaptchaPuzzleY = challenge.PuzzleY
+            CaptchaImageUrl = challenge.Question
         };
         return View(model);
     }
@@ -242,18 +237,15 @@ public class AccountController : Controller
         // Helper to regenerate captcha
         void RegenerateCaptcha()
         {
-            var challenge = _captchaService.GenerateSliderChallenge();
+            var challenge = _captchaService.GenerateChallenge();
             model.CaptchaChallengeId = challenge.ChallengeId;
-            model.CaptchaBackgroundImage = challenge.BackgroundImage;
-            model.CaptchaPuzzleImage = challenge.PuzzlePieceImage;
-            model.CaptchaPuzzleY = challenge.PuzzleY;
+            model.CaptchaImageUrl = challenge.Question;
         }
 
-        // Validate Slider CAPTCHA
-        if (!int.TryParse(model.CaptchaAnswer, out var sliderPosition) || 
-            !_captchaService.ValidateSliderChallenge(model.CaptchaChallengeId, sliderPosition))
+        // Validate CAPTCHA
+        if (!_captchaService.ValidateChallenge(model.CaptchaAnswer, model.CaptchaChallengeId))
         {
-            ModelState.AddModelError("", "Slider verification failed. Please try again.");
+            ModelState.AddModelError("", "Captcha verification failed. Please try again.");
             RegenerateCaptcha();
             return View(model);
         }
@@ -379,13 +371,11 @@ public class AccountController : Controller
     [AllowAnonymous]
     public IActionResult GetCaptcha()
     {
-        var challenge = _captchaService.GenerateSliderChallenge();
+        var challenge = _captchaService.GenerateChallenge();
         return Json(new
         {
             challengeId = challenge.ChallengeId,
-            backgroundImage = challenge.BackgroundImage,
-            puzzleImage = challenge.PuzzlePieceImage,
-            puzzleY = challenge.PuzzleY
+            imageUrl = challenge.Question
         });
     }
 

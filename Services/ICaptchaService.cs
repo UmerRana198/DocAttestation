@@ -58,4 +58,5 @@ public class CaptchaChallenge
     public string ChallengeId { get; set; } = null!;
     public string Question { get; set; } = null!;
     public int Answer { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

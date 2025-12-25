@@ -217,154 +217,103 @@
             box-shadow: 0 4px 12px rgba(0, 102, 51, 0.3);
         }
         
-        /* Slider Captcha Styles */
-        .slider-captcha-container {
-            background: #f8f9fa;
-            border: 2px solid #e0e0e0;
+        /* Alphanumeric Captcha Styles */
+        .captcha-container {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border: 2px solid #dee2e6;
             border-radius: 12px;
             padding: 1rem;
             margin-bottom: 1rem;
         }
         
-        .slider-captcha-title {
+        .captcha-title {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 0.75rem;
             font-weight: 600;
             color: #495057;
-        }
-        
-        .captcha-image-container {
-            position: relative;
-            width: 100%;
-            height: 150px;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 0.75rem;
-            background: #e9ecef;
-        }
-        
-        .captcha-background {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        
-        .captcha-puzzle-piece {
-            position: absolute;
-            width: 54px;
-            height: 54px;
-            left: 0;
-            pointer-events: none;
-            transition: left 0.01s linear;
-        }
-        
-        .captcha-puzzle-piece.correct {
-            filter: drop-shadow(0 0 6px #28a745);
-        }
-        
-        .slider-track {
-            position: relative;
-            width: 100%;
-            height: 45px;
-            background: linear-gradient(to right, #e9ecef, #dee2e6);
-            border-radius: 25px;
-            overflow: hidden;
-            border: 2px solid #dee2e6;
-        }
-        
-        .slider-progress {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 0;
-            background: linear-gradient(to right, #006633, #00994d);
-            border-radius: 25px 0 0 25px;
-            transition: width 0.05s ease-out;
-        }
-        
-        .slider-handle {
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 50px;
-            height: 40px;
-            background: white;
-            border-radius: 20px;
-            border: 2px solid #006633;
-            cursor: grab;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            transition: box-shadow 0.2s ease;
-            z-index: 10;
-        }
-        
-        .slider-handle:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-        }
-        
-        .slider-handle:active {
-            cursor: grabbing;
-        }
-        
-        .slider-handle i {
-            color: #006633;
-            font-size: 1.2rem;
-        }
-        
-        .slider-text {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6c757d;
             font-size: 0.9rem;
-            pointer-events: none;
-            user-select: none;
         }
         
-        .captcha-status {
+        .captcha-image-wrapper {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            font-size: 0.85rem;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
         }
         
-        .captcha-status.success {
-            color: #198754;
-        }
-        
-        .captcha-status.error {
-            color: #dc3545;
-        }
-        
-        .captcha-refresh {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 0.5rem;
-        }
-        
-        .btn-refresh {
-            border: 2px solid #006633;
-            color: #006633;
-            background: white;
+        .captcha-image {
+            flex: 1;
+            height: 60px;
             border-radius: 8px;
-            padding: 0.4rem 0.8rem;
-            font-size: 0.85rem;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .captcha-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .btn-refresh-captcha {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #006633;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
             transition: all 0.3s ease;
         }
         
-        .btn-refresh:hover {
+        .btn-refresh-captcha:hover {
             background: #006633;
             color: white;
+            transform: rotate(180deg);
+        }
+        
+        .btn-refresh-captcha i {
+            font-size: 1.2rem;
+            color: #006633;
+        }
+        
+        .btn-refresh-captcha:hover i {
+            color: white;
+        }
+        
+        .captcha-input-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .captcha-input {
+            flex: 1;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .captcha-input:focus {
+            border-color: #006633;
+            box-shadow: 0 0 0 0.2rem rgba(0, 102, 51, 0.15);
+            outline: none;
+        }
+        
+        .captcha-input::placeholder {
+            letter-spacing: normal;
+            font-weight: normal;
+            font-size: 0.9rem;
+            text-transform: none;
         }
         
         .form-links {
@@ -477,47 +426,34 @@
                         </label>
                     </div>
 
-                    <!-- Slider CAPTCHA -->
-                    <div class="slider-captcha-container">
-                        <div class="slider-captcha-title">
-                            <i class="bi bi-shield-check text-success"></i>
-                            <span>Slide to Verify</span>
+                    <!-- Alphanumeric CAPTCHA -->
+                    <div class="captcha-container">
+                        <div class="captcha-title">
+                            <i class="bi bi-shield-lock-fill text-success"></i>
+                            <span>Security Verification</span>
                         </div>
                         
-                        <!-- Captcha Image Area -->
-                        <div class="captcha-image-container" id="captchaImageContainer">
-                            <img src="@Model.CaptchaBackgroundImage" class="captcha-background" id="captchaBackground" alt="Captcha Background" />
-                            <img src="@Model.CaptchaPuzzleImage" class="captcha-puzzle-piece" id="captchaPuzzle" alt="Puzzle Piece" style="top: @(Model.CaptchaPuzzleY)px;" />
-                        </div>
-                        
-                        <!-- Slider Track -->
-                        <div class="slider-track" id="sliderTrack">
-                            <div class="slider-progress" id="sliderProgress"></div>
-                            <div class="slider-text" id="sliderText">
-                                <i class="bi bi-arrow-right me-2"></i> Drag to complete the puzzle
+                        <div class="captcha-image-wrapper">
+                            <div class="captcha-image">
+                                <img src="@Model.CaptchaImageUrl" id="captchaImage" alt="Captcha Code" />
                             </div>
-                            <div class="slider-handle" id="sliderHandle">
-                                <i class="bi bi-arrows"></i>
-                            </div>
-                        </div>
-                        
-                        <!-- Status Message -->
-                        <div class="captcha-status" id="captchaStatus" style="display: none;">
-                            <i class="bi" id="captchaStatusIcon"></i>
-                            <span id="captchaStatusText"></span>
-                        </div>
-                        
-                        <!-- Refresh Button -->
-                        <div class="captcha-refresh">
-                            <button type="button" class="btn btn-refresh btn-sm" onclick="refreshCaptcha()">
-                                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
+                            <button type="button" class="btn-refresh-captcha" onclick="refreshCaptcha()" title="Refresh Captcha">
+                                <i class="bi bi-arrow-clockwise"></i>
                             </button>
                         </div>
                         
-                        <!-- Hidden inputs -->
-                        <input type="hidden" asp-for="CaptchaAnswer" id="CaptchaAnswer" />
+                        <div class="captcha-input-group">
+                            <input type="text" 
+                                   asp-for="CaptchaAnswer" 
+                                   id="CaptchaAnswer" 
+                                   class="captcha-input" 
+                                   placeholder="Enter code above"
+                                   maxlength="5"
+                                   autocomplete="off"
+                                   oninput="checkCaptchaInput()" />
+                        </div>
+                        
                         <input type="hidden" asp-for="CaptchaChallengeId" id="CaptchaChallengeId" />
-                        <input type="hidden" id="CaptchaPuzzleY" value="@Model.CaptchaPuzzleY" />
                     </div>
 
                     <button type="submit" class="btn btn-signin" id="submitBtn" disabled>
@@ -539,139 +475,36 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
     
     <script>
-        (function() {
-            const sliderHandle = document.getElementById('sliderHandle');
-            const sliderTrack = document.getElementById('sliderTrack');
-            const sliderProgress = document.getElementById('sliderProgress');
-            const sliderText = document.getElementById('sliderText');
-            const puzzlePiece = document.getElementById('captchaPuzzle');
-            const captchaAnswer = document.getElementById('CaptchaAnswer');
+        function checkCaptchaInput() {
+            const captchaInput = document.getElementById('CaptchaAnswer');
             const submitBtn = document.getElementById('submitBtn');
-            const captchaStatus = document.getElementById('captchaStatus');
-            const captchaStatusIcon = document.getElementById('captchaStatusIcon');
-            const captchaStatusText = document.getElementById('captchaStatusText');
-            const imageContainer = document.getElementById('captchaImageContainer');
             
-            let isDragging = false;
-            let startX = 0;
-            let sliderPos = 0;
-            let isVerified = false;
-            
-            // Calculate dimensions after DOM is ready
-            const maxSlide = sliderTrack.offsetWidth - sliderHandle.offsetWidth;
-            const imageWidth = imageContainer.offsetWidth;
-            const puzzleWidth = 58; // Puzzle piece width
-            const maxPuzzleX = imageWidth - puzzleWidth - 10; // Max X position for puzzle
-            
-            function updatePosition(sliderX) {
-                // Bound slider position
-                sliderPos = Math.max(0, Math.min(sliderX, maxSlide));
-                
-                // Update slider UI
-                sliderHandle.style.left = sliderPos + 'px';
-                sliderProgress.style.width = sliderPos + 'px';
-                
-                // Calculate puzzle position proportionally
-                // Slider goes 0 to maxSlide, puzzle goes 0 to maxPuzzleX
-                const puzzleX = (sliderPos / maxSlide) * maxPuzzleX;
-                puzzlePiece.style.left = puzzleX + 'px';
-                
-                // Store puzzle X position for server validation
-                captchaAnswer.value = Math.round(puzzleX);
-            }
-            
-            function onDragStart(e) {
-                if (isVerified) return;
-                e.preventDefault();
-                isDragging = true;
-                startX = (e.type === 'mousedown') ? e.clientX : e.touches[0].clientX;
-                sliderHandle.style.cursor = 'grabbing';
-                sliderText.style.opacity = '0';
-            }
-            
-            function onDragMove(e) {
-                if (!isDragging) return;
-                e.preventDefault();
-                
-                const clientX = (e.type === 'mousemove') ? e.clientX : e.touches[0].clientX;
-                const diff = clientX - startX;
-                startX = clientX;
-                
-                updatePosition(sliderPos + diff);
-            }
-            
-            function onDragEnd() {
-                if (!isDragging) return;
-                isDragging = false;
-                sliderHandle.style.cursor = 'grab';
-                
-                // We validate on submit, not on drag end
-                // Just check if user moved it reasonably far
-                const puzzleX = parseInt(captchaAnswer.value) || 0;
-                
-                if (puzzleX > 50) {
-                    // Show success UI - actual validation happens on server
-                    showSuccess();
-                }
-            }
-            
-            function showSuccess() {
-                isVerified = true;
+            // Enable submit button when captcha has 5 characters
+            if (captchaInput.value.length >= 5) {
                 submitBtn.disabled = false;
-                puzzlePiece.classList.add('correct');
-                sliderHandle.innerHTML = '<i class="bi bi-check-lg"></i>';
-                sliderHandle.style.borderColor = '#198754';
-                sliderHandle.querySelector('i').style.color = '#198754';
-                sliderProgress.style.background = 'linear-gradient(to right, #198754, #20c997)';
-                
-                captchaStatus.style.display = 'flex';
-                captchaStatus.className = 'captcha-status success';
-                captchaStatusIcon.className = 'bi bi-check-circle-fill';
-                captchaStatusText.textContent = 'Verification complete!';
-            }
-            
-            window.resetSliderUI = function() {
-                sliderPos = 0;
-                isVerified = false;
-                updatePosition(0);
-                sliderText.style.opacity = '1';
-                puzzlePiece.classList.remove('correct');
-                sliderHandle.innerHTML = '<i class="bi bi-arrows"></i>';
-                sliderHandle.style.borderColor = '#006633';
-                sliderProgress.style.background = 'linear-gradient(to right, #006633, #00994d)';
+                captchaInput.style.borderColor = '#198754';
+            } else {
                 submitBtn.disabled = true;
-                captchaStatus.style.display = 'none';
-            };
-            
-            // Mouse events
-            sliderHandle.addEventListener('mousedown', onDragStart);
-            document.addEventListener('mousemove', onDragMove);
-            document.addEventListener('mouseup', onDragEnd);
-            
-            // Touch events
-            sliderHandle.addEventListener('touchstart', onDragStart, { passive: false });
-            document.addEventListener('touchmove', onDragMove, { passive: false });
-            document.addEventListener('touchend', onDragEnd);
-            
-            // Prevent text selection during drag
-            sliderHandle.addEventListener('selectstart', (e) => e.preventDefault());
-        })();
+                captchaInput.style.borderColor = '#dee2e6';
+            }
+        }
         
         function refreshCaptcha() {
+            const btn = document.querySelector('.btn-refresh-captcha');
+            btn.style.transform = 'rotate(360deg)';
+            
             $.get('@Url.Action("GetCaptcha", "Account")', function(data) {
-                $('#captchaBackground').attr('src', data.backgroundImage);
-                $('#captchaPuzzle').attr('src', data.puzzleImage);
-                $('#captchaPuzzle').css('top', data.puzzleY + 'px');
+                $('#captchaImage').attr('src', data.imageUrl);
                 $('#CaptchaChallengeId').val(data.challengeId);
-                $('#CaptchaPuzzleY').val(data.puzzleY);
-                $('#CaptchaAnswer').val('');
+                $('#CaptchaAnswer').val('').focus();
+                $('#submitBtn').prop('disabled', true);
+                document.getElementById('CaptchaAnswer').style.borderColor = '#dee2e6';
                 
-                // Reset slider using global function
-                if (typeof resetSliderUI === 'function') {
-                    resetSliderUI();
-                }
-                
+                setTimeout(() => {
+                    btn.style.transform = 'rotate(0deg)';
+                }, 300);
             }).fail(function() {
+                btn.style.transform = 'rotate(0deg)';
                 Swal.fire({
                     icon: 'error',
                     title: 'Error',
@@ -679,6 +512,12 @@
                 });
             });
         }
+        
+        // Auto-uppercase and filter input
+        document.getElementById('CaptchaAnswer').addEventListener('input', function(e) {
+            this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+            checkCaptchaInput();
+        });
         
         // Enter key support
         $(document).ready(function() {

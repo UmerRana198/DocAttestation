@@ -31,18 +31,12 @@ public class RegisterViewModel
     [Compare("Password", ErrorMessage = "Password and confirmation password do not match")]
     public string ConfirmPassword { get; set; } = null!;
 
-    // Slider Captcha
-    [Required(ErrorMessage = "Please complete the slider verification")]
-    [Display(Name = "Slider Position")]
+    // Alphanumeric Captcha
+    [Required(ErrorMessage = "Please enter the captcha code")]
+    [StringLength(5, MinimumLength = 5, ErrorMessage = "Please enter all 5 characters")]
+    [Display(Name = "Captcha Code")]
     public string CaptchaAnswer { get; set; } = null!;
 
     public string CaptchaChallengeId { get; set; } = null!;
-    
-    // Slider captcha images
-    public string CaptchaBackgroundImage { get; set; } = null!;
-    public string CaptchaPuzzleImage { get; set; } = null!;
-    public int CaptchaPuzzleY { get; set; }
-    
-    // Legacy (not used anymore)
-    public string? CaptchaQuestion { get; set; }
+    public string CaptchaImageUrl { get; set; } = null!;
 }
