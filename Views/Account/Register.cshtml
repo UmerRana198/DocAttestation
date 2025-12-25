@@ -1,0 +1,455 @@
+@model DocAttestation.ViewModels.RegisterViewModel
+@{
+    ViewData["Title"] = "Register";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Document Attestation Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        
+        .register-container {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .register-left {
+            flex: 0 0 35%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem;
+            overflow: hidden;
+        }
+        
+        .register-left::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800"><path d="M0,400 Q300,200 600,300 T1200,400 L1200,800 L0,800 Z" fill="rgba(0,0,0,0.3)"/></svg>') no-repeat bottom;
+            background-size: cover;
+            opacity: 0.5;
+        }
+        
+        .register-left-content {
+            position: relative;
+            z-index: 2;
+            color: white;
+        }
+        
+        .hec-logo {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .hec-logo i {
+            font-size: 2rem;
+            color: #0066cc;
+        }
+        
+        .welcome-text {
+            font-size: 1.8rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-top: 1.5rem;
+        }
+        
+        .register-right {
+            flex: 0 0 65%;
+            background: #f5f7fa;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .register-form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 650px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .form-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-subtitle {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-bottom: 2rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-label .required {
+            color: #e74c3c;
+        }
+        
+        .form-control, .form-select {
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 0.75rem;
+            font-size: 0.95rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: #0066cc;
+            box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.15);
+        }
+        
+        .form-hint {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+            margin-top: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #7f8c8d;
+            cursor: pointer;
+            z-index: 10;
+        }
+        
+        .password-wrapper {
+            position: relative;
+        }
+        
+        .phone-input-group {
+            display: flex;
+        }
+        
+        .country-code {
+            width: 100px;
+            border-top-right-radius: 0;
+            border-bottom-right-radius: 0;
+            border-right: none;
+        }
+        
+        .phone-input {
+            flex: 1;
+            border-top-left-radius: 0;
+            border-bottom-left-radius: 0;
+        }
+        
+        .submit-btn {
+            background: #28a745;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 0.875rem 2rem;
+            border-radius: 6px;
+            width: 100%;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .submit-btn:hover {
+            background: #218838;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .form-links {
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+        
+        .form-links a {
+            color: #2c3e50;
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin: 0 0.5rem;
+        }
+        
+        .form-links a:hover {
+            color: #0066cc;
+            text-decoration: underline;
+        }
+        
+        @@media (max-width: 992px) {
+            .register-container {
+                flex-direction: column;
+            }
+            
+            .register-left {
+                flex: 0 0 auto;
+                min-height: 250px;
+            }
+            
+            .register-right {
+                flex: 1;
+            }
+            
+            .welcome-text {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <div class="register-left">
+            <div class="register-left-content">
+                <div class="hec-logo">
+                    <i class="bi bi-shield-check"></i>
+                </div>
+                <h1 class="welcome-text">Welcome To<br>Document Attestation Portal</h1>
+            </div>
+        </div>
+        
+        <div class="register-right">
+            <div class="register-form-card">
+                <h2 class="form-title">Sign Up</h2>
+                <p class="form-subtitle">Document Attestation Portal - E Services</p>
+                
+                <form id="registerForm" asp-action="Register" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="CNIC" class="form-label">
+                                CNIC Number <span class="required">*</span>
+                            </label>
+                            <input asp-for="CNIC" class="form-control" placeholder="Please Enter CNIC without dashes e.g: 3520212345678" maxlength="13" />
+                            <span asp-validation-for="CNIC" class="text-danger"></span>
+                            <div class="form-hint">Please Enter CNIC without dashes e.g: 4123456222222</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MobileNumber" class="form-label">
+                                Primary Cell Phone Number <span class="required">*</span>
+                            </label>
+                            <div class="phone-input-group">
+                                <select class="form-select country-code">
+                                    <option value="+92">🇵🇰 +92</option>
+                                </select>
+                                <input asp-for="MobileNumber" class="form-control phone-input" placeholder="Please Enter Cell No. e.g: 3472748202" />
+                            </div>
+                            <span asp-validation-for="MobileNumber" class="text-danger"></span>
+                            <div class="form-hint">Please Enter Cell No. in correct format e.g: +92 3472748202</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">
+                            Primary Email <span class="required">*</span>
+                        </label>
+                        <input asp-for="Email" class="form-control" placeholder="Please Enter Email e.g: username@provider.com" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                        <div class="form-hint">Please Enter Email in correct format e.g: username@provider.com</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Password" class="form-label">
+                                Password <span class="required">*</span>
+                            </label>
+                            <div class="password-wrapper">
+                                <input asp-for="Password" type="password" class="form-control" placeholder="Please Enter Password" id="password" />
+                                <button type="button" class="password-toggle" onclick="togglePassword('password', 'passwordToggle1')">
+                                    <i class="bi bi-eye" id="passwordToggle1"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="Password" class="text-danger"></span>
+                            <div class="form-hint">Enter Password should be atleast 8 characters long, alphanumeric and contain atleast one capital letter.</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ConfirmPassword" class="form-label">
+                                Confirm Password <span class="required">*</span>
+                            </label>
+                            <div class="password-wrapper">
+                                <input asp-for="ConfirmPassword" type="password" class="form-control" placeholder="Please Enter password for confirmation" id="confirmPassword" />
+                                <button type="button" class="password-toggle" onclick="togglePassword('confirmPassword', 'passwordToggle2')">
+                                    <i class="bi bi-eye" id="passwordToggle2"></i>
+                                </button>
+                            </div>
+                            <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                            <div class="form-hint">Please Enter password for confirmation</div>
+                        </div>
+                    </div>
+                    
+                    <!-- CAPTCHA -->
+                    <div class="mb-3">
+                        <label class="form-label">
+                            CAPTCHA Verification <span class="required">*</span>
+                        </label>
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="border rounded p-2 bg-light" style="min-width: 120px; text-align: center; font-size: 1.2rem; font-weight: bold;">
+                                @Model.CaptchaQuestion
+                            </div>
+                            <input asp-for="CaptchaAnswer" class="form-control" placeholder="Enter the answer" style="max-width: 150px;" />
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshCaptcha()" title="Refresh CAPTCHA">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </div>
+                        <input type="hidden" asp-for="CaptchaChallengeId" />
+                        <input type="hidden" asp-for="CaptchaQuestion" />
+                        <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
+                        <div class="form-hint">Please solve the math problem</div>
+                    </div>
+                    
+                    <button type="submit" class="submit-btn">
+                        SUBMIT
+                    </button>
+                </form>
+                
+                <div class="form-links">
+                    <a asp-action="Login">Already Have An Account? Sign In</a><br>
+                    <a href="#" onclick="alert('Manual download feature coming soon')">Any Confusion? Download Manual</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js" integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.5/dist/jquery.validate.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery-validation-unobtrusive@4.0.0/dist/jquery.validate.unobtrusive.min.js"></script>
+    <script>
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('bi-eye');
+                icon.classList.add('bi-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('bi-eye-slash');
+                icon.classList.add('bi-eye');
+            }
+        }
+        
+        function refreshCaptcha() {
+            $.get('@Url.Action("GetCaptcha", "Account")', function(data) {
+                $('#CaptchaQuestion').val(data.question);
+                $('.border.rounded.p-2.bg-light').text(data.question);
+                $('#CaptchaChallengeId').val(data.challengeId);
+                $('#CaptchaAnswer').val('');
+            });
+        }
+
+        $(document).ready(function() {
+            $('#registerForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                if (!$(this).valid()) {
+                    return false;
+                }
+                
+                var form = $(this);
+                var submitButton = form.find('button[type="submit"]');
+                submitButton.prop('disabled', true).text('Registering...');
+                
+                $.ajax({
+                    url: form.attr('action'),
+                    method: 'POST',
+                    data: form.serialize(),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Success',
+                                text: response.message,
+                                confirmButtonText: 'Continue'
+                            }).then(() => {
+                                window.location.href = response.redirectUrl;
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: response.title || 'Error',
+                                text: response.message
+                            });
+                            submitButton.prop('disabled', false).text('SUBMIT');
+                            // Refresh CAPTCHA on error
+                            refreshCaptcha();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        var errorMessage = 'An error occurred. Please try again.';
+                        
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            } else if (xhr.responseJSON.error) {
+                                errorMessage = xhr.responseJSON.error;
+                            }
+                        } else if (xhr.responseText) {
+                            try {
+                                var response = JSON.parse(xhr.responseText);
+                                if (response.message) {
+                                    errorMessage = response.message;
+                                }
+                            } catch (e) {
+                                if (xhr.status === 400) {
+                                    errorMessage = 'Invalid request. Please check your input.';
+                                } else if (xhr.status === 500) {
+                                    errorMessage = 'Server error. Please try again later.';
+                                }
+                            }
+                        }
+                        
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Registration Failed',
+                            text: errorMessage
+                        });
+                        submitButton.prop('disabled', false).text('SUBMIT');
+                        // Refresh CAPTCHA on error
+                        refreshCaptcha();
+                    }
+                });
+            });
+        });
+    </script>
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+</body>
+</html>
+

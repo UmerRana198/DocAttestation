@@ -1,0 +1,121 @@
+@model DocAttestation.Models.Application
+@{
+    ViewData["Title"] = "Assign Application";
+    var officers = ViewBag.Officers as List<DocAttestation.Models.ApplicationUser>;
+    var levelToAssign = ViewBag.LevelToAssign as DocAttestation.Models.WorkflowLevel?;
+    var currentStep = ViewBag.CurrentStep as DocAttestation.Models.WorkflowStep;
+}
+
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="bi bi-person-check"></i> Assign Application</h4>
+            </div>
+            <div class="card-body">
+                @if (TempData["Error"] != null)
+                {
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-circle"></i> @TempData["Error"]
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                }
+
+                <div class="mb-4">
+                    <h5>Application Details</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="30%">Application Number:</th>
+                            <td>@Model.ApplicationNumber</td>
+                        </tr>
+                        <tr>
+                            <th>Document Type:</th>
+                            <td>@Model.DocumentType</td>
+                        </tr>
+                        <tr>
+                            <th>Issuing Authority:</th>
+                            <td>@Model.IssuingAuthority</td>
+                        </tr>
+                        <tr>
+                            <th>Current Status:</th>
+                            <td>
+                                @switch (Model.Status)
+                                {
+                                    case DocAttestation.Models.ApplicationStatus.Submitted:
+                                        <span class="badge bg-primary">Submitted</span>
+                                        break;
+                                    case DocAttestation.Models.ApplicationStatus.UnderVerification:
+                                        <span class="badge bg-info">Under Verification</span>
+                                        break;
+                                    case DocAttestation.Models.ApplicationStatus.UnderSupervision:
+                                        <span class="badge bg-warning">Under Supervision</span>
+                                        break;
+                                    case DocAttestation.Models.ApplicationStatus.UnderAttestation:
+                                        <span class="badge bg-secondary">Under Attestation</span>
+                                        break;
+                                }
+                            </td>
+                        </tr>
+                        @if (currentStep != null)
+                        {
+                            <tr>
+                                <th>Currently Assigned To:</th>
+                                <td>@currentStep.AssignedToUser?.FullName (@currentStep.Level)</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+
+                @if (levelToAssign.HasValue && officers != null && officers.Any())
+                {
+                    <form asp-action="AssignApplication" method="post">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        
+                        <div class="mb-3">
+                            <label class="form-label">
+                                <strong>Assign to @levelToAssign.Value Officer:</strong>
+                            </label>
+                            <select name="officerId" class="form-select" required>
+                                <option value="">-- Select Officer --</option>
+                                @foreach (var officer in officers)
+                                {
+                                    <option value="@officer.Id">@officer.FullName (@officer.Email)</option>
+                                }
+                            </select>
+                            <small class="form-text text-muted">
+                                Select the officer who will review this application at the @levelToAssign.Value level.
+                            </small>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a asp-action="Applications" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Assign Application
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        @if (!levelToAssign.HasValue)
+                        {
+                            <text><strong>No Assignment Needed:</strong> This application is not in a state that requires assignment.</text>
+                        }
+                        else if (officers == null || !officers.Any())
+                        {
+                            <text><strong>No Officers Available:</strong> There are no active @levelToAssign.Value officers in the system. Please create officer accounts first.</text>
+                        }
+                    </div>
+                    <a asp-action="Applications" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> Back to Applications
+                    </a>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

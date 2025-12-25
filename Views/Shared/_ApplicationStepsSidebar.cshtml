@@ -1,0 +1,85 @@
+@{
+    var currentStep = ViewBag.CurrentStep as int? ?? 1;
+    var steps = new[]
+    {
+        new { Number = 1, Title = "Personal Information", Action = "Step1", Icon = "bi-person" },
+        new { Number = 2, Title = "Contact Information", Action = "Step2", Icon = "bi-telephone" },
+        new { Number = 3, Title = "Document Upload & Verification", Action = "Step3", Icon = "bi-upload" },
+        new { Number = 4, Title = "Review & Submit", Action = "Step5", Icon = "bi-check-circle" }
+    };
+}
+
+<div class="application-steps-sidebar">
+    <div class="steps-header">
+        <h5 class="mb-0">Application Steps</h5>
+        <small class="text-muted">Complete all steps to submit</small>
+    </div>
+    <ul class="steps-list">
+        @foreach (var step in steps)
+        {
+            var isActive = step.Number == currentStep;
+            var isCompleted = step.Number < currentStep;
+            var isPending = step.Number > currentStep;
+            
+            <li class="step-item @(isActive ? "active" : "") @(isCompleted ? "completed" : "") @(isPending ? "pending" : "")">
+                @if (isPending)
+                {
+                    <span class="step-link" style="cursor: not-allowed;">
+                        <div class="step-number">
+                            <span>@step.Number</span>
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">@step.Title</div>
+                            <div class="step-status">
+                                <span class="badge bg-secondary">Pending</span>
+                            </div>
+                        </div>
+                        <div class="step-icon">
+                            <i class="bi @step.Icon"></i>
+                        </div>
+                    </span>
+                }
+                else
+                {
+                    <a asp-controller="Profile" asp-action="@step.Action" class="step-link">
+                        <div class="step-number">
+                            @if (isCompleted)
+                            {
+                                <i class="bi bi-check"></i>
+                            }
+                            else
+                            {
+                                <span>@step.Number</span>
+                            }
+                        </div>
+                        <div class="step-content">
+                            <div class="step-title">@step.Title</div>
+                            <div class="step-status">
+                                @if (isActive)
+                                {
+                                    <span class="badge bg-primary">Current</span>
+                                }
+                                else if (isCompleted)
+                                {
+                                    <span class="badge bg-success">Completed</span>
+                                }
+                            </div>
+                        </div>
+                        <div class="step-icon">
+                            <i class="bi @step.Icon"></i>
+                        </div>
+                    </a>
+                }
+            </li>
+        }
+    </ul>
+    <div class="steps-footer">
+        <div class="progress-info">
+            <small class="text-muted">Progress: @currentStep of @steps.Length steps</small>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: @((currentStep * 100) / steps.Length)%"></div>
+            </div>
+        </div>
+    </div>
+</div>
+

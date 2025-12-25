@@ -1,0 +1,101 @@
+@model DocAttestation.Models.Application
+@{
+    ViewData["Title"] = "Print QR Code";
+    var qrCodeBase64 = ViewBag.QRCodeBase64 as string;
+}
+
+<style>
+    @@media print {
+        body * {
+            visibility: hidden;
+        }
+        .print-area, .print-area * {
+            visibility: visible;
+        }
+        .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+        }
+        .no-print {
+            display: none !important;
+        }
+    }
+    .qr-container {
+        text-align: center;
+        padding: 20px;
+        border: 2px solid #000;
+        max-width: 400px;
+        margin: 20px auto;
+    }
+    .qr-code-img {
+        width: 300px;
+        height: 300px;
+        margin: 20px auto;
+        display: block;
+    }
+    .info-section {
+        margin-top: 20px;
+        text-align: left;
+    }
+</style>
+
+<div class="container mt-4">
+    <div class="no-print mb-3">
+        <a href="@Url.Action("Review", "Workflow", new { id = Model.Id })" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Back to Review
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="bi bi-printer"></i> Print QR Code
+        </button>
+    </div>
+
+    <div class="print-area">
+        <div class="card">
+            <div class="card-body">
+                <div class="qr-container">
+                    <h4 class="mb-3"><strong>Document Attestation QR Code</strong></h4>
+                    
+                    @if (!string.IsNullOrEmpty(qrCodeBase64))
+                    {
+                        <img src="data:image/png;base64,@qrCodeBase64" alt="QR Code" class="qr-code-img" />
+                    }
+                    else
+                    {
+                        <p class="text-danger">QR Code not available</p>
+                    }
+
+                    <div class="info-section">
+                        <p><strong>Application Number:</strong> @Model.ApplicationNumber</p>
+                        <p><strong>Applicant Name:</strong> @Model.ApplicantProfile.FullName</p>
+                        <p><strong>Document Type:</strong> @Model.DocumentType</p>
+                        <p><strong>Issuing Authority:</strong> @Model.IssuingAuthority</p>
+                        <p><strong>Year:</strong> @Model.Year</p>
+                        @if (Model.AttestedAt.HasValue)
+                        {
+                            <p><strong>Attested Date:</strong> @Model.AttestedAt.Value.ToString("dd MMM yyyy")</p>
+                        }
+                    </div>
+
+                    <div class="mt-3">
+                        <p class="small text-muted">
+                            <strong>Instructions:</strong> Cut along the dotted line and affix this QR code to the original hard copy document.
+                        </p>
+                        <hr style="border-top: 2px dashed #000; margin: 20px 0;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Auto-print when page loads (optional - can be removed if not desired)
+        // window.onload = function() {
+        //     window.print();
+        // };
+    </script>
+}
+

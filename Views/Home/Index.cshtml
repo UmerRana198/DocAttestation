@@ -1,0 +1,86 @@
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="hero-section">
+    <div class="container">
+        <div class="row align-items-center min-vh-50">
+            <div class="col-lg-6">
+                <div class="hero-content">
+                    <h1 class="display-4 fw-bold mb-4">
+                        <i class="bi bi-shield-check text-primary"></i> Document Attestation Portal
+                    </h1>
+                    <p class="lead mb-4">
+                        Secure, fast, and reliable online document attestation system. 
+                        Submit your documents digitally and track their status in real-time.
+                    </p>
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <div class="d-flex gap-3 flex-wrap">
+                            <a asp-controller="Account" asp-action="Register" class="btn btn-primary btn-lg">
+                                <i class="bi bi-person-plus"></i> Register Now
+                            </a>
+                            <a asp-controller="Account" asp-action="Login" class="btn btn-outline-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right"></i> Login
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="d-flex gap-3 flex-wrap">
+                            <a asp-controller="Profile" asp-action="Step1" class="btn btn-primary btn-lg">
+                                <i class="bi bi-plus-circle"></i> Create New Application
+                            </a>
+                            <a asp-controller="Application" asp-action="Index" class="btn btn-outline-primary btn-lg">
+                                <i class="bi bi-file-text"></i> My Applications
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="hero-features mt-5 mt-lg-0">
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="bi bi-shield-lock"></i>
+                                </div>
+                                <h5>Secure & Encrypted</h5>
+                                <p>Your documents are protected with advanced encryption and security measures.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="bi bi-speedometer2"></i>
+                                </div>
+                                <h5>Fast Processing</h5>
+                                <p>Streamlined workflow ensures quick processing of your applications.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="bi bi-check-circle"></i>
+                                </div>
+                                <h5>Track Status</h5>
+                                <p>Monitor your application status in real-time through the portal.</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <div class="feature-icon">
+                                    <i class="bi bi-qr-code"></i>
+                                </div>
+                                <h5>QR Verification</h5>
+                                <p>Each document includes a QR code for instant verification.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

@@ -1,0 +1,77 @@
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    var usersWithRoles = ViewBag.UsersWithRoles as List<dynamic>;
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Admin Dashboard</h2>
+        <hr />
+
+        <div class="mb-3">
+            <a asp-action="CreateOfficer" class="btn btn-primary">
+                <i class="bi bi-person-plus"></i> Create Officer Account
+            </a>
+            <a asp-action="Applications" class="btn btn-success ms-2">
+                <i class="bi bi-file-text"></i> Manage Applications
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5>System Users</h5>
+            </div>
+            <div class="card-body">
+                @if (usersWithRoles != null && usersWithRoles.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Roles</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var item in usersWithRoles)
+                                {
+                                    <tr>
+                                        <td>@item.User.FullName</td>
+                                        <td>@item.User.Email</td>
+                                        <td>@(item.User.PhoneNumber ?? "-")</td>
+                                        <td>
+                                            @foreach (var role in item.Roles)
+                                            {
+                                                <span class="badge bg-primary me-1">@role</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (item.User.IsActive)
+                                            {
+                                                <span class="badge bg-success">Active</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>@item.User.CreatedAt.ToString("dd MMM yyyy")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted">No users found.</p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+

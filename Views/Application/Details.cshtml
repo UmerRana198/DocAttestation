@@ -1,0 +1,618 @@
+@model DocAttestation.Models.Application
+@{
+    ViewData["Title"] = "Application Details";
+    var profile = Model.ApplicantProfile;
+}
+
+<div class="application-form-container">
+    <div class="application-form-sidebar">
+        @await Html.PartialAsync("_ApplicationDetailsSidebar", Model)
+    </div>
+    <div class="application-form-content">
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Application Details</h2>
+            <div class="d-flex gap-2">
+                @if (Model.Status == DocAttestation.Models.ApplicationStatus.Draft)
+                {
+                    <a asp-controller="Profile" asp-action="EditApplication" asp-route-applicationId="@Model.Id" class="btn btn-warning">
+                        <i class="bi bi-pencil"></i> Edit Application
+                    </a>
+                }
+                <a asp-action="Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Applications
+                </a>
+            </div>
+        </div>
+
+        <!-- Content Sections -->
+        <div id="detailsContent">
+            <!-- Application Information Section -->
+            <div class="content-section active" id="application-section">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary">
+                        <h5 class="mb-0 text-white"><i class="bi bi-info-circle"></i> Application Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Application Number</label>
+                                    <input type="text" class="form-control" value="@Model.ApplicationNumber" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Status</label>
+                                    <div>
+                                        @switch (Model.Status)
+                                        {
+                                            case DocAttestation.Models.ApplicationStatus.Draft:
+                                                <span class="badge bg-secondary">Draft</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.Submitted:
+                                                <span class="badge bg-primary">Submitted</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.UnderVerification:
+                                                <span class="badge bg-info">Under Verification</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.UnderSupervision:
+                                                <span class="badge bg-warning">Under Supervision</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.UnderAttestation:
+                                                <span class="badge bg-secondary">Under Attestation</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.Approved:
+                                                <span class="badge bg-success">Approved</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.Rejected:
+                                                <span class="badge bg-danger">Rejected</span>
+                                                break;
+                                            case DocAttestation.Models.ApplicationStatus.SentBack:
+                                                <span class="badge bg-warning">Sent Back</span>
+                                                break;
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Submitted Date</label>
+                                    <input type="text" class="form-control" value="@Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")" readonly />
+                                </div>
+                            </div>
+                            @if (Model.AttestedAt.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Attested Date</label>
+                                        <input type="text" class="form-control" value="@Model.AttestedAt.Value.ToString("dd MMM yyyy HH:mm")" readonly />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Verification Type</label>
+                                    <input type="text" class="form-control" value="@(Model.VerificationType == DocAttestation.Models.VerificationType.Normal ? "Normal" : "Urgent")" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Processing Fee</label>
+                                    <input type="text" class="form-control fw-bold text-success" value="PKR @Model.Fee.ToString("N2")" readonly />
+                                    @if (Model.Documents != null && Model.Documents.Any() && Model.Documents.Count > 1)
+                                    {
+                                        <small class="text-muted">Fee for @Model.Documents.Count document(s) - PKR @((Model.Fee / Model.Documents.Count).ToString("N2")) per document</small>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Payment Status</label>
+                                    <div>
+                                        @if (Model.IsPaid)
+                                        {
+                                            <span class="badge bg-success fs-6"><i class="bi bi-check-circle"></i> Paid</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning fs-6"><i class="bi bi-clock"></i> Pending</span>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                            @if (Model.TimeSlot.HasValue)
+                            {
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Assigned Time Slot</label>
+                                        <div class="alert alert-info mb-0 py-2">
+                                            <i class="bi bi-calendar-check"></i> 
+                                            <strong>@Model.TimeSlot.Value.ToString("dd MMM yyyy 'at' hh:mm tt")</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Information Section -->
+            <div class="content-section" id="document-section" style="display: none;">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary">
+                        <h5 class="mb-0 text-white"><i class="bi bi-file-text"></i> Document Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Document Type</label>
+                                    <input type="text" class="form-control" value="@Model.DocumentType" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Issuing Authority</label>
+                                    <input type="text" class="form-control" value="@Model.IssuingAuthority" readonly />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Year</label>
+                                    <input type="text" class="form-control" value="@Model.Year" readonly />
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.RegistrationNumber))
+                            {
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Registration Number</label>
+                                        <input type="text" class="form-control" value="@Model.RegistrationNumber" readonly />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(Model.RollNumber))
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Roll Number</label>
+                                        <input type="text" class="form-control" value="@Model.RollNumber" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label">Document Hash</label>
+                                    <input type="text" class="form-control" value="@Model.DocumentHash" readonly />
+                                </div>
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.StampedDocumentHash))
+                            {
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Stamped Document Hash</label>
+                                        <input type="text" class="form-control" value="@Model.StampedDocumentHash" readonly />
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Personal Information Section -->
+            @if (profile != null)
+            {
+                <div class="content-section" id="personal-section" style="display: none;">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary">
+                            <h5 class="mb-0 text-white"><i class="bi bi-person"></i> Personal Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Full Name</label>
+                                        <input type="text" class="form-control" value="@profile.FullName" readonly />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Father's Name</label>
+                                        <input type="text" class="form-control" value="@profile.FatherName" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Date of Birth</label>
+                                        <input type="text" class="form-control" value="@profile.DateOfBirth.ToString("dd MMM yyyy")" readonly />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Gender</label>
+                                        <input type="text" class="form-control" value="@profile.Gender" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Information Section -->
+                <div class="content-section" id="contact-section" style="display: none;">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary">
+                            <h5 class="mb-0 text-white"><i class="bi bi-telephone"></i> Contact Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Mobile Number</label>
+                                        <input type="text" class="form-control" value="@profile.MobileNumber" readonly />
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Email</label>
+                                        <input type="text" class="form-control" value="@profile.Email" readonly />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Address</label>
+                                        <textarea class="form-control" rows="2" readonly>@profile.Address</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Documents Section -->
+            <div class="content-section" id="documents-section" style="display: none;">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary">
+                        <h5 class="mb-0 text-white">Attached Documents (@(Model.Documents != null && Model.Documents.Any() ? Model.Documents.Count : 0))</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Documents != null && Model.Documents.Any())
+                        {
+                            
+                            @foreach (var doc in Model.Documents)
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-header bg-primary">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0 text-white">
+                                                <i class="bi bi-file-pdf text-white"></i> @doc.DocumentName
+                                            </h6>
+                                            <span class="badge bg-light text-dark">Uploaded: @doc.UploadedAt.ToString("dd MMM yyyy HH:mm")</span>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label fw-bold">Document Name</label>
+                                                    <p class="mb-0">@doc.DocumentName</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label">Document Hash</label>
+                                                    <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
+                                                    <small class="text-muted">SHA256 hash for verification</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="d-flex gap-2">
+                                                    <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-eye"></i> View Document
+                                                    </a>
+                                                    @if (!string.IsNullOrEmpty(doc.StampedDocumentPath))
+                                                    {
+                                                        <span class="badge bg-success align-self-center">
+                                                            <i class="bi bi-check-circle"></i> Stamped
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+                            {
+                                <div class="alert alert-success mt-3">
+                                    <h6 class="alert-heading"><i class="bi bi-check-circle"></i> All Documents Attested</h6>
+                                    <div class="mt-2">
+                                        <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-success">
+                                            <i class="bi bi-download"></i> Download All Attested Documents
+                                        </a>
+                                        <small class="text-muted d-block mt-2">Download the final attested documents package</small>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Backward compatibility: show single document -->
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Original Document</label>
+                                        <div>
+                                            <a asp-action="ViewDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                <i class="bi bi-file-pdf"></i> View Original Document
+                                            </a>
+                                            <small class="text-muted d-block mt-2">View the original document you uploaded</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Stamped Document</label>
+                                            <div>
+                                                <a asp-action="ViewStampedDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-info btn-sm">
+                                                    <i class="bi bi-file-pdf"></i> View Stamped Document
+                                                </a>
+                                                <small class="text-muted d-block mt-2">View the document with QR code stamp</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Download Attested Document</label>
+                                            <div>
+                                                <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-success btn-sm">
+                                                    <i class="bi bi-download"></i> Download Attested Document
+                                                </a>
+                                                <small class="text-muted d-block mt-2">Download the final attested document</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow History Section -->
+            @if (Model.WorkflowHistory != null && Model.WorkflowHistory.Any())
+            {
+                <div class="content-section" id="history-section" style="display: none;">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary">
+                            <h5 class="mb-0 text-white"><i class="bi bi-clock-history"></i> Workflow History (@Model.WorkflowHistory.Count)</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Level</th>
+                                    <th>Action</th>
+                                    <th>Previous Status</th>
+                                    <th>New Status</th>
+                                    <th>Remarks</th>
+                                    <th>Action By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var history in Model.WorkflowHistory.OrderByDescending(h => h.ActionDate))
+                                {
+                                    <tr>
+                                        <td>@history.ActionDate.ToString("dd MMM yyyy HH:mm")</td>
+                                        <td>
+                                            @switch (history.Level)
+                                            {
+                                                case DocAttestation.Models.WorkflowLevel.Verification:
+                                                    <span class="badge bg-info">Verification</span>
+                                                    break;
+                                                case DocAttestation.Models.WorkflowLevel.Supervision:
+                                                    <span class="badge bg-warning">Supervision</span>
+                                                    break;
+                                                case DocAttestation.Models.WorkflowLevel.Attestation:
+                                                    <span class="badge bg-secondary">Attestation</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>@history.Action</td>
+                                        <td>
+                                            @switch (history.PreviousStatus)
+                                            {
+                                                case DocAttestation.Models.ApplicationStatus.Submitted:
+                                                    <span class="badge bg-primary">Submitted</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.UnderVerification:
+                                                    <span class="badge bg-info">Under Verification</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.UnderSupervision:
+                                                    <span class="badge bg-warning">Under Supervision</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.UnderAttestation:
+                                                    <span class="badge bg-secondary">Under Attestation</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.Approved:
+                                                    <span class="badge bg-success">Approved</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.Rejected:
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.SentBack:
+                                                    <span class="badge bg-warning">Sent Back</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-secondary">@history.PreviousStatus</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>
+                                            @switch (history.NewStatus)
+                                            {
+                                                case DocAttestation.Models.ApplicationStatus.Submitted:
+                                                    <span class="badge bg-primary">Submitted</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.UnderVerification:
+                                                    <span class="badge bg-info">Under Verification</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.UnderSupervision:
+                                                    <span class="badge bg-warning">Under Supervision</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.UnderAttestation:
+                                                    <span class="badge bg-secondary">Under Attestation</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.Approved:
+                                                    <span class="badge bg-success">Approved</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.Rejected:
+                                                    <span class="badge bg-danger">Rejected</span>
+                                                    break;
+                                                case DocAttestation.Models.ApplicationStatus.SentBack:
+                                                    <span class="badge bg-warning">Sent Back</span>
+                                                    break;
+                                                default:
+                                                    <span class="badge bg-secondary">@history.NewStatus</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td>@(string.IsNullOrEmpty(history.Remarks) ? "-" : history.Remarks)</td>
+                                        <td>@(history.ActionByUser?.FullName ?? history.ActionByUser?.UserName ?? "System")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- QR Code Section -->
+            @if (!string.IsNullOrEmpty(Model.QRToken))
+            {
+                <div class="content-section" id="qr-section" style="display: none;">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary">
+                            <h5 class="mb-0 text-white"><i class="bi bi-qr-code"></i> QR Code Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">QR Code Status</label>
+                                        <input type="text" class="form-control" value="@(Model.IsQRRevoked ? "Revoked" : "Active")" readonly />
+                                    </div>
+                                </div>
+                                @if (Model.QRTokenExpiry.HasValue)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">QR Token Expiry</label>
+                                            <input type="text" class="form-control" value="@Model.QRTokenExpiry.Value.ToString("dd MMM yyyy HH:mm")" readonly />
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            @if (Model.IsQRRevoked)
+                            {
+                                <div class="alert alert-warning">
+                                    <strong>Note:</strong> This QR code has been revoked.
+                                </div>
+                            }
+                            @if (User.IsInRole("AttestationOfficer") && Model.Status == DocAttestation.Models.ApplicationStatus.Approved)
+                            {
+                                <div class="mt-3">
+                                    <a href="@Url.Action("PrintQRCode", "Workflow", new { applicationId = Model.Id })" target="_blank" class="btn btn-success btn-lg">
+                                        <i class="bi bi-printer"></i> Print QR Code for Original Hard Copy
+                                    </a>
+                                    <p class="text-muted mt-2">
+                                        <i class="bi bi-info-circle"></i> Use this to print the QR code for affixing to the original hard copy document.
+                                    </p>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Handle sidebar navigation clicks
+            $('.sidebar-nav-link').on('click', function(e) {
+                e.preventDefault();
+                
+                var targetSection = $(this).data('section');
+                
+                // Hide all sections
+                $('.content-section').hide();
+                
+                // Remove active class from all sidebar items and links
+                $('.step-item').removeClass('active');
+                $('.sidebar-nav-link').removeClass('active');
+                
+                // Show target section
+                $('#' + targetSection + '-section').show();
+                
+                // Add active class to clicked link's parent item
+                $(this).closest('.step-item').addClass('active');
+                $(this).addClass('active');
+            });
+            
+            // Show first section by default and highlight first sidebar item
+            $('.content-section.active').show();
+            $('.step-item:first-child').addClass('active');
+        });
+    </script>
+}
+

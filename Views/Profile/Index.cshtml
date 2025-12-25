@@ -1,0 +1,103 @@
+@model DocAttestation.Models.ApplicantProfile
+@{
+    ViewData["Title"] = "My Profile";
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>My Profile</h2>
+        <hr />
+        
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="bi bi-check-circle"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        @if (!Model.IsProfileComplete)
+        {
+            <div class="alert alert-info">
+                <h5>Profile Incomplete</h5>
+                <p>Please complete your profile to submit attestation applications.</p>
+                <p><strong>Current Step:</strong> @ViewBag.CurrentStep of 5</p>
+                <a asp-action="Step1" class="btn btn-primary">Continue Profile Setup</a>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-success">
+                <h5><i class="bi bi-check-circle"></i> Profile Complete</h5>
+                <p>Your profile has been completed. You can now submit attestation applications.</p>
+                <div class="mt-3">
+                    <a asp-controller="Profile" asp-action="Step1" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Create New Application
+                    </a>
+                    <a asp-controller="Application" asp-action="Index" class="btn btn-outline-primary">
+                        <i class="bi bi-list-ul"></i> View My Applications
+                    </a>
+                </div>
+            </div>
+        }
+
+        <div class="card" id="profileCard" style="cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.boxShadow='0 4px 12px rgba(0,0,0,0.15)'" onmouseout="this.style.boxShadow=''">
+            <div class="card-header bg-primary">
+                <h5 class="text-white mb-0">
+                    <i class="bi bi-person-circle"></i> Profile Information
+                    <small class="float-end" style="font-size: 0.75rem; opacity: 0.9;">
+                        <i class="bi bi-info-circle"></i> Double-click to edit
+                    </small>
+                </h5>
+            </div>
+            <div class="card-body">
+                <p><strong>Full Name:</strong> @Model.FullName</p>
+                <p><strong>Father Name:</strong> @Model.FatherName</p>
+                <p><strong>Date of Birth:</strong> @Model.DateOfBirth.ToShortDateString()</p>
+                <p><strong>Gender:</strong> @Model.Gender</p>
+                <p><strong>Email:</strong> @Model.Email</p>
+                <p><strong>Mobile:</strong> @Model.MobileNumber</p>
+                <p><strong>Address:</strong> @Model.Address</p>
+            </div>
+        </div>
+
+        @if (!Model.IsProfileComplete)
+        {
+            <div class="mt-3">
+                <a asp-action="Step1" class="btn btn-primary">Continue Profile Setup</a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let clickCount = 0;
+            let clickTimer = null;
+
+            $('#profileCard').on('click', function(e) {
+                clickCount++;
+                
+                if (clickCount === 1) {
+                    clickTimer = setTimeout(function() {
+                        clickCount = 0;
+                    }, 300); // 300ms window for double-click
+                } else if (clickCount === 2) {
+                    clearTimeout(clickTimer);
+                    clickCount = 0;
+                    // Double-click detected - redirect to edit personal info only
+                    window.location.href = '@Url.Action("Step1", "Profile", new { editMode = true })';
+                }
+            });
+
+            // Prevent text selection on double-click
+            $('#profileCard').on('mousedown', function(e) {
+                if (e.detail > 1) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}
+

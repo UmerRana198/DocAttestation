@@ -1,0 +1,255 @@
+@model DocAttestation.ViewModels.ProfileStep3ViewModel
+@{
+    ViewData["Title"] = ViewBag.IsEditMode == true ? "Edit Application" : "Step 3: Document Upload & Verification";
+    ViewBag.CurrentStep = 3;
+    var documentNames = DocAttestation.ViewModels.ProfileStep3ViewModel.GetDocumentNames();
+    var groupedDocumentNames = DocAttestation.ViewModels.ProfileStep3ViewModel.GetGroupedDocumentNames();
+    var isEditMode = ViewBag.IsEditMode == true;
+}
+
+<div class="application-form-container">
+    <div class="application-form-sidebar">
+        @await Html.PartialAsync("_ApplicationStepsSidebar")
+    </div>
+    <div class="application-form-content">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0" style="color: white;">
+                    @if (isEditMode)
+                    {
+                        <text><i class="bi bi-pencil"></i> Edit Application - Update Documents &amp; Verification</text>
+                    }
+                    else
+                    {
+                        <text><i class="bi bi-upload"></i> Step 3: Document Upload &amp; Verification</text>
+                    }
+                </h4>
+            </div>
+            <div class="card-body">
+                @if (isEditMode)
+                {
+                    <div class="alert alert-warning mb-4">
+                        <i class="bi bi-info-circle"></i> <strong>Editing Mode:</strong> Upload new documents to replace existing ones. All previous documents will be removed.
+                    </div>
+                }
+                <form asp-action="Step3" method="post" enctype="multipart/form-data" id="documentUploadForm">
+                    <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                    
+                    @if (isEditMode && TempData["EditingApplicationId"] != null)
+                    {
+                        <input type="hidden" name="EditingApplicationId" id="EditingApplicationId" value="@TempData["EditingApplicationId"]" />
+                    }
+                    else if (Context.Request.Query["applicationId"].Count > 0)
+                    {
+                        <input type="hidden" name="EditingApplicationId" id="EditingApplicationId" value="@Context.Request.Query["applicationId"]" />
+                    }
+
+                    <div class="form-group mb-4">
+                        <label asp-for="VerificationType" class="form-label fw-bold"></label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="VerificationType" value="0" id="verificationNormal" checked>
+                            <label class="form-check-label" for="verificationNormal">
+                                Normal Verification - PKR 500 per document (Processing time: 20 days)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" asp-for="VerificationType" value="1" id="verificationUrgent">
+                            <label class="form-check-label" for="verificationUrgent">
+                                Urgent Verification - PKR 1,500 per document (Processing time: 24 hours)
+                            </label>
+                        </div>
+                        <span asp-validation-for="VerificationType" class="text-danger"></span>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i> You can upload up to 5 documents. Fee will be calculated per document based on verification type selected above.
+                    </div>
+
+                    <div id="documentsContainer">
+                        @if (Model.Documents == null || Model.Documents.Count == 0)
+                        {
+                            Model.Documents = new List<DocAttestation.ViewModels.DocumentItem> { new DocAttestation.ViewModels.DocumentItem() };
+                        }
+                        
+                        @for (int i = 0; i < Model.Documents.Count; i++)
+                        {
+                            <div class="document-item card mb-3" data-index="@i">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Document @(i + 1)</h6>
+                                        @if (i > 0)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-danger remove-document" data-index="@i">
+                                                <i class="bi bi-trash"></i> Remove
+                                            </button>
+                                        }
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Document Name <span class="text-danger">*</span></label>
+                                                <select name="Documents[@i].DocumentName" class="form-select document-name-select" required>
+                                                    <option value="">-- Select Document Name --</option>
+                                                    @foreach (var group in groupedDocumentNames)
+                                                    {
+                                                        <optgroup label="@group.Key">
+                                                            @foreach (var docName in group.Value)
+                                                            {
+                                                                <option value="@docName" selected="@(Model.Documents[i].DocumentName == docName)">@docName</option>
+                                                            }
+                                                        </optgroup>
+                                                    }
+                                                </select>
+                                                <span asp-validation-for="Documents[i].DocumentName" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Upload Document (PDF) <span class="text-danger">*</span></label>
+                                                <input type="file" name="Documents[@i].Document" class="form-control document-file-input" accept=".pdf" required />
+                                                <span asp-validation-for="Documents[i].Document" class="text-danger"></span>
+                                                <small class="form-text text-muted">Maximum size: 10MB</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary" id="addDocumentBtn" @(Model.Documents.Count >= 5 ? "disabled" : "")>
+                            <i class="bi bi-plus-circle"></i> Add Another Document (@Model.Documents.Count / 5)
+                        </button>
+                    </div>
+
+                    <div class="form-group mt-4">
+                        <a asp-action="Step2" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Previous
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-arrow-right"></i> Next Step
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <script>
+        $(document).ready(function() {
+            var maxDocuments = 5;
+            var documentNames = @Html.Raw(Json.Serialize(documentNames));
+            var groupedDocumentNames = @Html.Raw(Json.Serialize(groupedDocumentNames));
+            
+            // Add document
+            $('#addDocumentBtn').click(function() {
+                var currentCount = $('.document-item').length;
+                if (currentCount >= maxDocuments) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Maximum Documents',
+                        text: 'You can upload a maximum of ' + maxDocuments + ' documents.'
+                    });
+                    return;
+                }
+                
+                var index = currentCount;
+                var html = `
+                    <div class="document-item card mb-3" data-index="${index}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <h6 class="mb-0">Document ${index + 1}</h6>
+                                <button type="button" class="btn btn-sm btn-danger remove-document" data-index="${index}">
+                                    <i class="bi bi-trash"></i> Remove
+                                </button>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Document Name <span class="text-danger">*</span></label>
+                                        <select name="Documents[${index}].DocumentName" class="form-select document-name-select" required>
+                                            <option value="">-- Select Document Name --</option>
+                `;
+                
+                // Add optgroups
+                Object.keys(groupedDocumentNames).forEach(function(groupName) {
+                    html += `<optgroup label="${groupName}">`;
+                    groupedDocumentNames[groupName].forEach(function(name) {
+                        html += `<option value="${name}">${name}</option>`;
+                    });
+                    html += `</optgroup>`;
+                });
+                
+                html += `
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Upload Document (PDF) <span class="text-danger">*</span></label>
+                                        <input type="file" name="Documents[${index}].Document" class="form-control document-file-input" accept=".pdf" required />
+                                        <small class="form-text text-muted">Maximum size: 10MB</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                $('#documentsContainer').append(html);
+                updateAddButton();
+            });
+            
+            // Remove document
+            $(document).on('click', '.remove-document', function() {
+                var index = $(this).data('index');
+                $(this).closest('.document-item').remove();
+                reindexDocuments();
+                updateAddButton();
+            });
+            
+            // Reindex documents after removal
+            function reindexDocuments() {
+                $('.document-item').each(function(index) {
+                    $(this).attr('data-index', index);
+                    $(this).find('h6').text('Document ' + (index + 1));
+                    $(this).find('.remove-document').attr('data-index', index);
+                    $(this).find('select').attr('name', 'Documents[' + index + '].DocumentName');
+                    $(this).find('input[type="file"]').attr('name', 'Documents[' + index + '].Document');
+                });
+            }
+            
+            // Update add button
+            function updateAddButton() {
+                var currentCount = $('.document-item').length;
+                $('#addDocumentBtn').text('Add Another Document (' + currentCount + ' / ' + maxDocuments + ')');
+                if (currentCount >= maxDocuments) {
+                    $('#addDocumentBtn').prop('disabled', true);
+                } else {
+                    $('#addDocumentBtn').prop('disabled', false);
+                }
+            }
+            
+            // Validate at least one document
+            $('#documentUploadForm').on('submit', function(e) {
+                var documentCount = $('.document-item').length;
+                if (documentCount === 0) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No Documents',
+                        text: 'Please upload at least one document.'
+                    });
+                    return false;
+                }
+            });
+        });
+    </script>
+}
+

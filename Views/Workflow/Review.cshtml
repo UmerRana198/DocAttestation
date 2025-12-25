@@ -1,0 +1,576 @@
+@model DocAttestation.Models.Application
+@using System.Linq
+@{
+    ViewData["Title"] = "Review Application";
+    var currentStep = ViewBag.CurrentStep as DocAttestation.Models.WorkflowStep;
+    var isAttestationOfficer = User.IsInRole("AttestationOfficer");
+    var isApproved = Model.Status == DocAttestation.Models.ApplicationStatus.Approved;
+    var isApprovedView = ViewBag.IsApproved as bool? ?? false;
+    
+    // Convert to list first, then order
+    var workflowHistoryList = Model.WorkflowHistory != null ? Model.WorkflowHistory.ToList() : new List<DocAttestation.Models.WorkflowHistory>();
+    System.Func<DocAttestation.Models.WorkflowHistory, DateTime> orderByFunc = h => h.ActionDate;
+    var workflowHistory = workflowHistoryList.OrderByDescending(orderByFunc).ToList();
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="mb-0">Review Application</h2>
+            <a asp-action="Index" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Applications
+            </a>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <ul class="nav nav-tabs mb-4" id="reviewTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">
+                    <i class="bi bi-info-circle"></i> Application Details
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" type="button" role="tab" aria-controls="documents" aria-selected="false">
+                    <i class="bi bi-file-pdf"></i> Documents
+                </button>
+            </li>
+            @if (!isApprovedView)
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button" role="tab" aria-controls="actions" aria-selected="false">
+                        <i class="bi bi-check-circle"></i> Workflow Actions
+                    </button>
+                </li>
+            }
+            else
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab" aria-controls="approved" aria-selected="false">
+                        <i class="bi bi-check-circle"></i> Approved Status
+                    </button>
+                </li>
+            }
+            @if (Model.WorkflowHistory != null && Model.WorkflowHistory.Any())
+            {
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">
+                        <i class="bi bi-clock-history"></i> Workflow History
+                    </button>
+                </li>
+            }
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="reviewTabContent">
+            <!-- Application Details Tab -->
+            <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary">
+                        <h5 class="mb-0 text-white"><i class="bi bi-info-circle"></i> Application Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Application Number:</strong></label>
+                                    <p class="form-control-plaintext">@Model.ApplicationNumber</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Applicant:</strong></label>
+                                    <p class="form-control-plaintext">@Model.ApplicantProfile.FullName</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Document Type:</strong></label>
+                                    <p class="form-control-plaintext">@Model.DocumentType</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Issuing Authority:</strong></label>
+                                    <p class="form-control-plaintext">@Model.IssuingAuthority</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Year:</strong></label>
+                                    <p class="form-control-plaintext">@Model.Year</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group mb-3">
+                                    <label class="form-label"><strong>Status:</strong></label>
+                                    <div>
+                                        <span class="badge bg-@(Model.Status == DocAttestation.Models.ApplicationStatus.Approved ? "success" : "warning") fs-6">
+                                            @Model.Status
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documents Tab -->
+            <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-primary">
+                        <h5 class="mb-0 text-white"><i class="bi bi-file-pdf"></i> Review Documents (@(Model.Documents != null && Model.Documents.Any() ? Model.Documents.Count : 0))</h5>
+                    </div>
+                    <div class="card-body">
+                        @if (Model.Documents != null && Model.Documents.Any())
+                        {
+                            @foreach (var doc in Model.Documents)
+                            {
+                                <div class="card mb-3">
+                                    <div class="card-header bg-light">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <h6 class="mb-0">
+                                                <i class="bi bi-file-pdf text-primary"></i> @doc.DocumentName
+                                            </h6>
+                                            <div class="d-flex gap-2 align-items-center">
+                                                @{
+                                                    var statusBadgeClass = doc.Status switch
+                                                    {
+                                                        DocAttestation.Models.DocumentStatus.Approved => "bg-success",
+                                                        DocAttestation.Models.DocumentStatus.Rejected => "bg-danger",
+                                                        DocAttestation.Models.DocumentStatus.SentBack => "bg-warning",
+                                                        _ => "bg-secondary"
+                                                    };
+                                                    var statusText = doc.Status switch
+                                                    {
+                                                        DocAttestation.Models.DocumentStatus.Approved => "Approved",
+                                                        DocAttestation.Models.DocumentStatus.Rejected => "Rejected",
+                                                        DocAttestation.Models.DocumentStatus.SentBack => "Sent Back",
+                                                        _ => "Pending"
+                                                    };
+                                                }
+                                                <span class="badge @statusBadgeClass">@statusText</span>
+                                                <span class="badge bg-secondary">Uploaded: @doc.UploadedAt.ToString("dd MMM yyyy HH:mm")</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label fw-bold" Style="color: white;">Document Name</label>
+                                                    <p class="mb-0">@doc.DocumentName</p>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label">Document Hash</label>
+                                                    <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
+                                                    <small class="text-muted">SHA256 hash for verification</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        @if (doc.Status != DocAttestation.Models.DocumentStatus.Pending && doc.VerifiedAt.HasValue)
+                                        {
+                                            <div class="alert alert-@(doc.Status == DocAttestation.Models.DocumentStatus.Approved ? "success" : doc.Status == DocAttestation.Models.DocumentStatus.Rejected ? "danger" : "warning") mb-3">
+                                                <strong>Verified @doc.Status.ToString()</strong> on @doc.VerifiedAt.Value.ToString("dd MMM yyyy HH:mm")
+                                                @if (doc.VerifiedByUser != null)
+                                                {
+                                                    <span> by @doc.VerifiedByUser.UserName</span>
+                                                }
+                                                @if (!string.IsNullOrEmpty(doc.VerificationRemarks))
+                                                {
+                                                    <div class="mt-2"><strong>Remarks:</strong> @doc.VerificationRemarks</div>
+                                                }
+                                            </div>
+                                        }
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="d-flex gap-2">
+                                                    <a href="@Url.Action("ViewApplicationDocument", "Workflow", new { documentId = doc.Id })" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-eye"></i> View Document
+                                                    </a>
+                                                    @if (!isApprovedView && doc.Status == DocAttestation.Models.DocumentStatus.Pending)
+                                                    {
+                                                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#verifyDocumentModal" data-document-id="@doc.Id" data-document-name="@doc.DocumentName">
+                                                            <i class="bi bi-check-circle"></i> Verify
+                                                        </button>
+                                                    }
+                                                    @if (!string.IsNullOrEmpty(doc.StampedDocumentPath))
+                                                    {
+                                                        <a href="@Url.Action("ViewStampedApplicationDocument", "Workflow", new { documentId = doc.Id })" target="_blank" class="btn btn-outline-info btn-sm">
+                                                            <i class="bi bi-file-pdf"></i> View Stamped Document
+                                                        </a>
+                                                        <span class="badge bg-success align-self-center">
+                                                            <i class="bi bi-check-circle"></i> Stamped
+                                                        </span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                            
+                            @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+                            {
+                                <div class="alert alert-success mt-3">
+                                    <h6 class="alert-heading"><i class="bi bi-check-circle"></i> All Documents Attested</h6>
+                                    <p class="mb-0">All documents have been attested and stamped with QR codes.</p>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <!-- Fallback to single document for backward compatibility -->
+                            <div class="mb-3">
+                                <a href="@Url.Action("ViewDocument", "Workflow", new { applicationId = Model.Id })" target="_blank" class="btn btn-outline-primary">
+                                    <i class="bi bi-file-pdf"></i> View Original Document
+                                </a>
+                                @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+                                {
+                                    <a href="@Url.Action("ViewStampedDocument", "Workflow", new { applicationId = Model.Id })" target="_blank" class="btn btn-outline-info">
+                                        <i class="bi bi-file-pdf"></i> View Stamped Document (with QR Code)
+                                    </a>
+                                }
+                            </div>
+                            <p class="text-muted small">Click to open documents in a new tab for review</p>
+                        }
+                        
+                        @if (isApproved && !string.IsNullOrEmpty(Model.QRToken) && isAttestationOfficer)
+                        {
+                            <div class="alert alert-info mt-3">
+                                <i class="bi bi-info-circle"></i> <strong>Note:</strong> After approving, you can print the QR code to affix it to the original hard copy document.
+                                <div class="mt-2">
+                                    <a href="@Url.Action("PrintQRCode", "Workflow", new { applicationId = Model.Id })" target="_blank" class="btn btn-success btn-sm">
+                                        <i class="bi bi-printer"></i> Print QR Code for Original Hard Copy
+                                    </a>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workflow Actions Tab -->
+            @if (!isApprovedView)
+            {
+                <div class="tab-pane fade" id="actions" role="tabpanel" aria-labelledby="actions-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary">
+                            <h5 class="mb-0 text-white"><i class="bi bi-check-circle"></i> Workflow Actions</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="remarks" class="form-label">Remarks (Optional for approval, Required for reject/send back)</label>
+                                <textarea id="remarks" class="form-control" rows="3"></textarea>
+                            </div>
+
+                            <div class="btn-group" role="group">
+                                <button type="button" class="btn btn-success" id="approveBtn">Approve</button>
+                                <button type="button" class="btn btn-warning" id="sendBackBtn">Send Back</button>
+                                <button type="button" class="btn btn-danger" id="rejectBtn">Reject</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <!-- Approved Status Tab -->
+                <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-success">
+                            <h5 class="mb-0 text-white"><i class="bi bi-check-circle"></i> Application Approved</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-success">
+                                <i class="bi bi-info-circle"></i> This application has been approved. You can now print the QR code for the original hard copy document.
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.QRToken))
+                            {
+                                <a href="@Url.Action("PrintQRCode", "Workflow", new { applicationId = Model.Id })" target="_blank" class="btn btn-success btn-lg">
+                                    <i class="bi bi-printer"></i> Print QR Code for Original Hard Copy
+                                </a>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+
+            <!-- Workflow History Tab -->
+            @if (Model.WorkflowHistory != null && Model.WorkflowHistory.Any())
+            {
+                <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-primary">
+                            <h5 class="mb-0 text-white"><i class="bi bi-clock-history"></i> Workflow History</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Action</th>
+                                            <th>By</th>
+                                            <th>Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var history in workflowHistory)
+                                        {
+                                            <tr>
+                                                <td>@history.ActionDate.ToShortDateString()</td>
+                                                <td>@history.Action</td>
+                                                <td>@history.ActionByUser.UserName</td>
+                                                <td>@history.Remarks</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Document Verification Modal -->
+<div class="modal fade" id="verifyDocumentModal" tabindex="-1" aria-labelledby="verifyDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="verifyDocumentModalLabel">
+                    <i class="bi bi-check-circle"></i> Verify Document
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Document:</label>
+                    <p class="mb-0" id="modalDocumentName"></p>
+                </div>
+                <div class="mb-3">
+                    <label for="documentRemarks" class="form-label">Comments / Remarks <span class="text-danger">*</span></label>
+                    <textarea id="documentRemarks" class="form-control" rows="4" placeholder="Enter your comments or remarks about this document..." required></textarea>
+                    <small class="text-muted">Remarks are required for Reject and Send Back actions</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="approveDocumentBtn">
+                    <i class="bi bi-check-circle"></i> Approve
+                </button>
+                <button type="button" class="btn btn-warning" id="sendBackDocumentBtn">
+                    <i class="bi bi-arrow-left-circle"></i> Send Back
+                </button>
+                <button type="button" class="btn btn-danger" id="rejectDocumentBtn">
+                    <i class="bi bi-x-circle"></i> Reject
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            let currentDocumentId = null;
+            
+            // Document Verification Modal
+            $('#verifyDocumentModal').on('show.bs.modal', function(event) {
+                const button = $(event.relatedTarget);
+                currentDocumentId = button.data('document-id');
+                const documentName = button.data('document-name');
+                $('#modalDocumentName').text(documentName);
+                $('#documentRemarks').val('');
+            });
+            
+            // Document Approve
+            $('#approveDocumentBtn').click(function() {
+                const remarks = $('#documentRemarks').val();
+                if (!currentDocumentId) return;
+                submitDocumentAction('approve', currentDocumentId, remarks);
+            });
+            
+            // Document Send Back
+            $('#sendBackDocumentBtn').click(function() {
+                const remarks = $('#documentRemarks').val();
+                if (!currentDocumentId) return;
+                if (!remarks || remarks.trim() === '') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remarks Required',
+                        text: 'Please provide remarks when sending back a document'
+                    });
+                    return;
+                }
+                submitDocumentAction('sendback', currentDocumentId, remarks);
+            });
+            
+            // Document Reject
+            $('#rejectDocumentBtn').click(function() {
+                const remarks = $('#documentRemarks').val();
+                if (!currentDocumentId) return;
+                if (!remarks || remarks.trim() === '') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remarks Required',
+                        text: 'Please provide remarks when rejecting a document'
+                    });
+                    return;
+                }
+                submitDocumentAction('reject', currentDocumentId, remarks);
+            });
+            
+            function submitDocumentAction(action, documentId, remarks) {
+                Swal.fire({
+                    title: 'Confirm Action',
+                    text: `Are you sure you want to ${action} this document?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("VerifyDocument", "Workflow")',
+                            method: 'POST',
+                            data: {
+                                documentId: documentId,
+                                action: action,
+                                remarks: remarks
+                            },
+                            headers: {
+                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success',
+                                        text: response.message
+                                    }).then(() => {
+                                        $('#verifyDocumentModal').modal('hide');
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'An error occurred. Please try again.'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // Application-level actions
+            $('#approveBtn').click(function() {
+                const remarks = $('#remarks').val();
+                submitAction('approve', remarks);
+            });
+
+            $('#sendBackBtn').click(function() {
+                const remarks = $('#remarks').val();
+                if (!remarks || remarks.trim() === '') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remarks Required',
+                        text: 'Please provide remarks when sending back an application'
+                    });
+                    return;
+                }
+                submitAction('sendback', remarks);
+            });
+
+            $('#rejectBtn').click(function() {
+                const remarks = $('#remarks').val();
+                if (!remarks || remarks.trim() === '') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Remarks Required',
+                        text: 'Please provide remarks when rejecting an application'
+                    });
+                    return;
+                }
+                submitAction('reject', remarks);
+            });
+
+            function submitAction(action, remarks) {
+                Swal.fire({
+                    title: 'Confirm Action',
+                    text: `Are you sure you want to ${action} this application?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let url = '';
+                        if (action === 'approve') {
+                            url = '@Url.Action("Approve", "Workflow")';
+                        } else if (action === 'sendback') {
+                            url = '@Url.Action("SendBack", "Workflow")';
+                        } else if (action === 'reject') {
+                            url = '@Url.Action("Reject", "Workflow")';
+                        }
+
+                        $.ajax({
+                            url: url,
+                            method: 'POST',
+                            data: {
+                                applicationId: @Model.Id,
+                                remarks: remarks
+                            },
+                            headers: {
+                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success',
+                                        text: response.message
+                                    }).then(() => {
+                                        // Reload the page to show approved status and print QR code option
+                                        window.location.reload();
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'An error occurred. Please try again.'
+                                });
+                            }
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+}

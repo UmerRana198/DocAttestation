@@ -1,0 +1,165 @@
+@model List<DocAttestation.Models.WorkflowStep>
+@{
+    ViewData["Title"] = "Pending Applications";
+    var pendingSteps = ViewBag.PendingSteps as List<DocAttestation.Models.WorkflowStep> ?? Model;
+    var recentlyApproved = ViewBag.RecentlyApproved as List<DocAttestation.Models.WorkflowStep> ?? new List<DocAttestation.Models.WorkflowStep>();
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <h2>Pending Applications</h2>
+        <hr />
+
+        @if (pendingSteps == null || !pendingSteps.Any())
+        {
+            <div class="alert alert-info">
+                <p>No pending applications assigned to you.</p>
+            </div>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Application Number</th>
+                        <th>Applicant</th>
+                        <th>Document Type</th>
+                        <th>Level</th>
+                        <th>Assigned Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var step in pendingSteps)
+                    {
+                        <tr>
+                            <td>@step.Application.ApplicationNumber</td>
+                            <td>@step.Application.ApplicantProfile.FullName</td>
+                            <td>@step.Application.DocumentType</td>
+                            <td>
+                                @switch (step.Level)
+                                {
+                                    case DocAttestation.Models.WorkflowLevel.Verification:
+                                        <span class="badge bg-info">Verification</span>
+                                        break;
+                                    case DocAttestation.Models.WorkflowLevel.Supervision:
+                                        <span class="badge bg-warning">Supervision</span>
+                                        break;
+                                    case DocAttestation.Models.WorkflowLevel.Attestation:
+                                        <span class="badge bg-success">Attestation</span>
+                                        break;
+                                }
+                            </td>
+                            <td>@step.AssignedAt.ToShortDateString()</td>
+                            <td>
+                                <a asp-action="Review" asp-route-id="@step.ApplicationId" class="btn btn-sm btn-primary">Review</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+
+        @if (recentlyApproved.Any())
+        {
+            <div class="mt-5">
+                <h3>Recently Approved Applications (Last 24 Hours)</h3>
+                <p class="text-muted">These applications have been approved. You can still access them to print QR codes.</p>
+                <hr />
+                
+                <!-- Search Bar -->
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" id="searchApproved" class="form-control" placeholder="Search by Application Number or Applicant Name...">
+                                <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                                    <i class="bi bi-x-circle"></i> Clear
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped" id="approvedTable">
+                        <thead>
+                            <tr>
+                                <th>Application Number</th>
+                                <th>Applicant</th>
+                                <th>Document Type</th>
+                                <th>Approved Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="approvedTableBody">
+                            @foreach (var step in recentlyApproved)
+                            {
+                                <tr>
+                                    <td>@step.Application.ApplicationNumber</td>
+                                    <td>@step.Application.ApplicantProfile.FullName</td>
+                                    <td>@step.Application.DocumentType</td>
+                                    <td>@(step.CompletedAt?.ToString("dd MMM yyyy HH:mm") ?? "N/A")</td>
+                                    <td>
+                                        <span class="badge bg-success">Approved</span>
+                                    </td>
+                                    <td>
+                                        <a asp-action="Review" asp-route-id="@step.ApplicationId" class="btn btn-sm btn-success">
+                                            <i class="bi bi-printer"></i> Print QR Code
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="noResults" class="alert alert-info" style="display: none;">
+                    <i class="bi bi-info-circle"></i> No applications found matching your search criteria.
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Search functionality for approved applications
+            $('#searchApproved').on('keyup', function() {
+                var searchText = $(this).val().toLowerCase();
+                var rows = $('#approvedTableBody tr');
+                var hasResults = false;
+
+                rows.each(function() {
+                    var applicationNumber = $(this).find('td:eq(0)').text().toLowerCase();
+                    var applicantName = $(this).find('td:eq(1)').text().toLowerCase();
+                    
+                    if (applicationNumber.includes(searchText) || applicantName.includes(searchText)) {
+                        $(this).show();
+                        hasResults = true;
+                    } else {
+                        $(this).hide();
+                    }
+                });
+
+                // Show/hide "no results" message
+                if (hasResults || searchText === '') {
+                    $('#noResults').hide();
+                } else {
+                    $('#noResults').show();
+                }
+            });
+
+            // Clear search
+            $('#clearSearch').on('click', function() {
+                $('#searchApproved').val('');
+                $('#approvedTableBody tr').show();
+                $('#noResults').hide();
+            });
+        });
+    </script>
+}
+

@@ -1,0 +1,508 @@
+@model DocAttestation.Models.Application
+@{
+    ViewData["Title"] = "Step 5: Review & Submit";
+    ViewBag.CurrentStep = 5;
+    var profile = Model.ApplicantProfile;
+}
+
+<div class="application-form-container">
+    <div class="application-form-sidebar">
+        @await Html.PartialAsync("_ApplicationStepsSidebar")
+    </div>
+    <div class="application-form-content">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0 text-white"><i class="bi bi-check-circle"></i> Review & Submit Application</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle"></i> Please review all information carefully before submitting. Once submitted, you cannot make changes.
+                </div>
+
+                <!-- Tabs Navigation -->
+                <ul class="nav nav-tabs mb-4" id="reviewTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="true">
+                            <i class="bi bi-person"></i> Personal Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" type="button" role="tab" aria-controls="contact" aria-selected="false">
+                            <i class="bi bi-telephone"></i> Contact Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="document-tab" data-bs-toggle="tab" data-bs-target="#document" type="button" role="tab" aria-controls="document" aria-selected="false">
+                            <i class="bi bi-info-circle"></i> Application Info
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="preview-tab" data-bs-toggle="tab" data-bs-target="#preview" type="button" role="tab" aria-controls="preview" aria-selected="false">
+                            <i class="bi bi-file-pdf"></i> Document Preview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment" type="button" role="tab" aria-controls="payment" aria-selected="false">
+                            <i class="bi bi-credit-card"></i> Payment & Time Slot
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="declaration-tab" data-bs-toggle="tab" data-bs-target="#declaration" type="button" role="tab" aria-controls="declaration" aria-selected="false">
+                            <i class="bi bi-shield-check"></i> Declaration
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="reviewTabContent">
+                    <!-- Personal Information Tab -->
+                    <div class="tab-pane fade show active" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Full Name</label>
+                                            <input type="text" class="form-control" value="@profile.FullName" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Father's Name</label>
+                                            <input type="text" class="form-control" value="@profile.FatherName" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Date of Birth</label>
+                                            <input type="text" class="form-control" value="@profile.DateOfBirth.ToString("dd MMM yyyy")" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Gender</label>
+                                            <input type="text" class="form-control" value="@profile.Gender" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(profile.PhotographPath))
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Photograph</label>
+                                                <div>
+                                                    <img src="@profile.PhotographPath" alt="Photograph" class="img-thumbnail" style="max-width: 150px; max-height: 150px;" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Tab -->
+                    <div class="tab-pane fade" id="contact" role="tabpanel" aria-labelledby="contact-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Mobile Number</label>
+                                            <input type="text" class="form-control" value="@profile.MobileNumber" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Email</label>
+                                            <input type="text" class="form-control" value="@profile.Email" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Address</label>
+                                            <textarea class="form-control" rows="2" readonly>@profile.Address</textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Application Information Tab -->
+                    <div class="tab-pane fade" id="document" role="tabpanel" aria-labelledby="document-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Application Number</label>
+                                            <input type="text" class="form-control fw-bold" value="@Model.ApplicationNumber" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Verification Type</label>
+                                            <input type="text" class="form-control" value="@(Model.VerificationType == DocAttestation.Models.VerificationType.Normal ? "Normal" : "Urgent")" readonly />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Preview Tab -->
+                    <div class="tab-pane fade" id="preview" role="tabpanel" aria-labelledby="preview-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                @if (Model.Documents != null && Model.Documents.Any())
+                                {
+                                    <h5 class="mb-3">Uploaded Documents (@Model.Documents.Count)</h5>
+                                    @foreach (var doc in Model.Documents)
+                                    {
+                                        <div class="card mb-3">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group mb-3">
+                                                            <label class="form-label fw-bold">Document Name</label>
+                                                            <p class="mb-0">@doc.DocumentName</p>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group mb-3">
+                                                            <label class="form-label">Document Hash</label>
+                                                            <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
+                                                            <small class="text-muted">SHA256 hash for verification</small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-12">
+                                                        <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Document
+                                                        </a>
+                                                        <small class="text-muted d-block mt-2">Uploaded on: @doc.UploadedAt.ToString("dd MMM yyyy HH:mm")</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <!-- Backward compatibility: show single document -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Uploaded Document</label>
+                                                <div>
+                                                    <a asp-controller="Application" asp-action="ViewDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-eye"></i> View Document
+                                                    </a>
+                                                    <small class="text-muted d-block mt-2">Click to view the uploaded PDF document</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Document Hash</label>
+                                                <input type="text" class="form-control" value="@Model.DocumentHash" readonly />
+                                                <small class="text-muted">SHA256 hash for verification</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment & Time Slot Tab -->
+                    <div class="tab-pane fade" id="payment" role="tabpanel" aria-labelledby="payment-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Verification Type</label>
+                                            <input type="text" class="form-control" value="@(Model.VerificationType == DocAttestation.Models.VerificationType.Normal ? "Normal" : "Urgent")" readonly />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Processing Fee</label>
+                                            <input type="text" class="form-control fw-bold text-success" value="PKR @Model.Fee.ToString("N2")" readonly />
+                                            @if (Model.Documents != null && Model.Documents.Any())
+                                            {
+                                                <small class="text-muted">Fee for @Model.Documents.Count document(s) - PKR @((Model.Fee / Model.Documents.Count).ToString("N2")) per document</small>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (Model.TimeSlot.HasValue)
+                                {
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="alert alert-info">
+                                                <i class="bi bi-calendar-check"></i> 
+                                                <strong>Assigned Time Slot:</strong> 
+                                                @Model.TimeSlot.Value.ToString("dd MMM yyyy 'at' hh:mm tt")
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-info-circle"></i> 
+                                    Please ensure payment is made before submitting the application.
+                                </div>
+                                @if (!Model.IsPaid)
+                                {
+                                    <div class="d-grid gap-2 mt-3">
+                                        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#paymentModal">
+                                            <i class="bi bi-credit-card"></i> PAY & SUBMIT - PKR @Model.Fee.ToString("N2")
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-check-circle"></i> Payment completed successfully!
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Declaration Tab -->
+                    <div class="tab-pane fade" id="declaration" role="tabpanel" aria-labelledby="declaration-tab">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="declarationCheckbox" required>
+                                    <label class="form-check-label" for="declarationCheckbox">
+                                        <strong>I hereby declare that:</strong>
+                                        <ul class="mt-2 mb-0">
+                                            <li>All information provided in this application is true and correct to the best of my knowledge</li>
+                                            <li>The document uploaded is authentic and belongs to me</li>
+                                            <li>I understand that providing false information may result in rejection of my application</li>
+                                            <li>I agree to the terms and conditions of the attestation process</li>
+                                        </ul>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <form id="reviewForm" asp-action="SubmitApplication" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="d-flex justify-content-between mt-4 pt-3 border-top">
+                        <a asp-action="Step4" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Previous Step
+                        </a>
+                        <button type="button" class="btn btn-success btn-lg" id="submitBtn" disabled style="display: none;">
+                            <i class="bi bi-check-circle"></i> Submit Application
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1" aria-labelledby="paymentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="paymentModalLabel">
+                    <i class="bi bi-credit-card"></i> Payment
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Amount</label>
+                    <input type="text" class="form-control" value="PKR @Model.Fee.ToString("N2")" readonly />
+                </div>
+                <div class="mb-3">
+                    <label for="cardNumber" class="form-label">Card Number</label>
+                    <input type="text" class="form-control" id="cardNumber" placeholder="Enter card number" maxlength="19" />
+                    <small class="text-muted">Only last 4 digits will be stored for security</small>
+                </div>
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> This is a demo payment. In production, integrate with a payment gateway.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="processPaymentBtn">
+                    <i class="bi bi-check-circle"></i> PAY & SUBMIT
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+
+            // Format card number input
+            $('#cardNumber').on('input', function() {
+                let value = $(this).val().replace(/\s/g, '');
+                let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
+                $(this).val(formattedValue);
+            });
+
+            // Process payment
+            $('#processPaymentBtn').click(function() {
+                const cardNumber = $('#cardNumber').val().replace(/\s/g, '');
+                if (!cardNumber || cardNumber.length < 13) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Card',
+                        text: 'Please enter a valid card number'
+                    });
+                    return;
+                }
+
+                // Get last 4 digits
+                const lastFour = cardNumber.slice(-4);
+
+                $.ajax({
+                    url: '@Url.Action("ProcessPayment", "Profile")',
+                    method: 'POST',
+                    data: {
+                        applicationId: @Model.Id,
+                        cardNumber: lastFour
+                    },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            // Close the modal
+                            var modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                            if (modal) modal.hide();
+                            
+                            // Mark payment as completed
+                            paymentCompleted = true;
+                            
+                            // Update the UI to show payment completed
+                            $('.btn[data-bs-target="#paymentModal"]').replaceWith(
+                                '<div class="alert alert-success"><i class="bi bi-check-circle"></i> Payment completed successfully!</div>'
+                            );
+                            
+                            // Update submit button state
+                            updateSubmitButton();
+                            
+                            // Show success message
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Payment & Submission Successful',
+                                text: response.message || 'Your payment has been processed and application has been submitted successfully!'
+                            }).then(() => {
+                                // Redirect to applications list after successful payment and submission
+                                window.location.href = '@Url.Action("Index", "Application")';
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Payment Failed',
+                                text: response.message
+                            });
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred. Please try again.'
+                        });
+                    }
+                });
+            });
+
+            // Track payment status dynamically
+            var paymentCompleted = @(Model.IsPaid ? "true" : "false");
+            
+            // Function to check if submit should be enabled
+            function updateSubmitButton() {
+                var declarationChecked = $('#declarationCheckbox').is(':checked');
+                var canSubmit = paymentCompleted && declarationChecked;
+                $('#submitBtn').prop('disabled', !canSubmit);
+                
+                // Update button text/style based on status
+                if (!paymentCompleted) {
+                    $('#submitBtn').attr('title', 'Please complete payment first');
+                } else if (!declarationChecked) {
+                    $('#submitBtn').attr('title', 'Please check the declaration');
+                } else {
+                    $('#submitBtn').attr('title', 'Click to submit your application');
+                }
+            }
+            
+            // Declaration checkbox change handler
+            $('#declarationCheckbox').change(function() {
+                updateSubmitButton();
+            });
+            
+            // Initial state - always disable and check conditions
+            updateSubmitButton();
+
+            $('#submitBtn').click(function() {
+                Swal.fire({
+                    title: 'Confirm Submission',
+                    text: 'Are you sure you want to submit this application?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Yes, Submit',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: '@Url.Action("SubmitApplication", "Profile")',
+                            method: 'POST',
+                            data: { applicationId: @Model.Id },
+                            headers: {
+                                'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                            },
+                            success: function(response) {
+                                if (response.success) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Success',
+                                        text: response.message
+                                    }).then(() => {
+                                        window.location.href = response.redirectUrl;
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error',
+                                        text: response.message
+                                    });
+                                }
+                            },
+                            error: function() {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error',
+                                    text: 'An error occurred. Please try again.'
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}
+

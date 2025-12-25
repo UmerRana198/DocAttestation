@@ -1,0 +1,57 @@
+@{
+    ViewData["Title"] = "Access Denied";
+    var returnUrl = ViewData["ReturnUrl"] as string;
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body text-center">
+                <h2 class="text-danger">Access Denied</h2>
+                <hr />
+                
+                <div class="mb-4">
+                    <i class="bi bi-shield-exclamation" style="font-size: 4rem; color: #dc3545;"></i>
+                </div>
+                
+                <p class="lead">You do not have permission to access this resource.</p>
+                
+                <p class="text-muted">
+                    @if (!string.IsNullOrEmpty(returnUrl))
+                    {
+                        <span>You tried to access: <code>@returnUrl</code></span>
+                    }
+                    else
+                    {
+                        <span>Please contact your administrator if you believe this is an error.</span>
+                    }
+                </p>
+                
+                <div class="mt-4">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a asp-action="Index" asp-controller="Home" class="btn btn-primary">Go to Home</a>
+                        
+                        @if (User.IsInRole("Applicant"))
+                        {
+                            <a asp-action="Index" asp-controller="Profile" class="btn btn-outline-primary">My Profile</a>
+                        }
+                        else if (User.IsInRole("Admin"))
+                        {
+                            <a asp-action="Index" asp-controller="Admin" class="btn btn-outline-primary">Admin Dashboard</a>
+                        }
+                        else
+                        {
+                            <a asp-action="Index" asp-controller="Workflow" class="btn btn-outline-primary">Workflow</a>
+                        }
+                    }
+                    else
+                    {
+                        <a asp-action="Login" asp-controller="Account" class="btn btn-primary">Login</a>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+

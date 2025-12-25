@@ -1,0 +1,82 @@
+@{
+    ViewData["Title"] = "QR Verification";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h2>Verify Document</h2>
+        <p class="text-muted">Scan the QR code on your attested document to verify its authenticity.</p>
+
+        <div class="mb-3">
+            <label for="qrToken" class="form-label">QR Token</label>
+            <input type="text" id="qrToken" class="form-control" placeholder="Enter or scan QR token" />
+        </div>
+
+        <button type="button" class="btn btn-primary" id="verifyBtn">Verify</button>
+
+        <div id="result" class="mt-4" style="display: none;">
+            <div class="card">
+                <div class="card-body">
+                    <h5 id="resultTitle"></h5>
+                    <p id="resultMessage"></p>
+                    <div id="resultDetails"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Get token from query string
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('t');
+            if (token) {
+                $('#qrToken').val(token);
+            }
+
+            $('#verifyBtn').click(function() {
+                const token = $('#qrToken').val();
+                if (!token) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Token Required',
+                        text: 'Please enter a QR token'
+                    });
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("VerifyQR", "Verification")',
+                    method: 'GET',
+                    data: { t: token },
+                    success: function(response) {
+                        $('#result').show();
+                        if (response.isValid) {
+                            $('#resultTitle').text('Document Verified').removeClass('text-danger').addClass('text-success');
+                            $('#resultMessage').text(response.message);
+                            $('#resultDetails').html(`
+                                <p><strong>Issuing Authority:</strong> ${response.issuingAuthority || 'N/A'}</p>
+                                <p><strong>Attestation Date:</strong> ${response.attestationDate ? new Date(response.attestationDate).toLocaleDateString() : 'N/A'}</p>
+                                <p><strong>Document Type:</strong> ${response.documentType || 'N/A'}</p>
+                            `);
+                        } else {
+                            $('#resultTitle').text('Verification Failed').removeClass('text-success').addClass('text-danger');
+                            $('#resultMessage').text(response.message);
+                            $('#resultDetails').html('');
+                        }
+                    },
+                    error: function() {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: 'An error occurred during verification'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+}
+

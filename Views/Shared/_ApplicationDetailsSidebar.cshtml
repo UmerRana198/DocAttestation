@@ -1,0 +1,172 @@
+@model DocAttestation.Models.Application
+@{
+    var statusClass = Model.Status switch
+    {
+        DocAttestation.Models.ApplicationStatus.Approved => "success",
+        DocAttestation.Models.ApplicationStatus.Rejected => "danger",
+        DocAttestation.Models.ApplicationStatus.SentBack => "warning",
+        DocAttestation.Models.ApplicationStatus.UnderVerification => "info",
+        DocAttestation.Models.ApplicationStatus.UnderSupervision => "warning",
+        DocAttestation.Models.ApplicationStatus.UnderAttestation => "secondary",
+        _ => "primary"
+    };
+    var profile = Model.ApplicantProfile;
+}
+
+<div class="application-steps-sidebar">
+    <div class="steps-header">
+        <h5 class="mb-0">Application Details</h5>
+        <small class="text-muted">Navigation Menu</small>
+    </div>
+    
+    <ul class="steps-list">
+        <li class="step-item active">
+            <a href="#" class="step-link sidebar-nav-link" data-section="application">
+                <div class="step-number">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">Application Info</div>
+                </div>
+                <div class="step-icon">
+                    <i class="bi bi-info-circle"></i>
+                </div>
+            </a>
+        </li>
+        <li class="step-item">
+            <a href="#" class="step-link sidebar-nav-link" data-section="document">
+                <div class="step-number">
+                    <i class="bi bi-file-text"></i>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">Document Info</div>
+                </div>
+                <div class="step-icon">
+                    <i class="bi bi-file-text"></i>
+                </div>
+            </a>
+        </li>
+        @if (profile != null)
+        {
+            <li class="step-item">
+                <a href="#" class="step-link sidebar-nav-link" data-section="personal">
+                    <div class="step-number">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-title">Personal Info</div>
+                    </div>
+                    <div class="step-icon">
+                        <i class="bi bi-person"></i>
+                    </div>
+                </a>
+            </li>
+            <li class="step-item">
+                <a href="#" class="step-link sidebar-nav-link" data-section="contact">
+                    <div class="step-number">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-title">Contact Info</div>
+                    </div>
+                    <div class="step-icon">
+                        <i class="bi bi-telephone"></i>
+                    </div>
+                </a>
+            </li>
+        }
+        <li class="step-item">
+            <a href="#" class="step-link sidebar-nav-link" data-section="documents">
+                <div class="step-number">
+                    <i class="bi bi-file-pdf"></i>
+                </div>
+                <div class="step-content">
+                    <div class="step-title">Documents</div>
+                    @if (Model.Documents != null && Model.Documents.Any())
+                    {
+                        <div class="step-status">
+                            <span class="badge bg-primary">@Model.Documents.Count</span>
+                        </div>
+                    }
+                </div>
+                <div class="step-icon">
+                    <i class="bi bi-file-pdf"></i>
+                </div>
+            </a>
+        </li>
+        @if (Model.WorkflowHistory != null && Model.WorkflowHistory.Any())
+        {
+            <li class="step-item">
+                <a href="#" class="step-link sidebar-nav-link" data-section="history">
+                    <div class="step-number">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-title">Workflow History</div>
+                    </div>
+                    <div class="step-icon">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </a>
+            </li>
+        }
+        @if (!string.IsNullOrEmpty(Model.QRToken))
+        {
+            <li class="step-item">
+                <a href="#" class="step-link sidebar-nav-link" data-section="qr">
+                    <div class="step-number">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-title">QR Code</div>
+                    </div>
+                    <div class="step-icon">
+                        <i class="bi bi-qr-code"></i>
+                    </div>
+                </a>
+            </li>
+        }
+    </ul>
+    
+    <div class="application-info-card mt-3">
+        <div class="info-item">
+            <div class="info-label">Application Number</div>
+            <div class="info-value">@Model.ApplicationNumber</div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Status</div>
+            <div class="info-value">
+                <span class="badge bg-@statusClass">@Model.Status</span>
+            </div>
+        </div>
+        <div class="info-item">
+            <div class="info-label">Submitted Date</div>
+            <div class="info-value">@Model.SubmittedAt.ToString("dd MMM yyyy")</div>
+        </div>
+        @if (Model.AttestedAt.HasValue)
+        {
+            <div class="info-item">
+                <div class="info-label">Attested Date</div>
+                <div class="info-value">@Model.AttestedAt.Value.ToString("dd MMM yyyy")</div>
+            </div>
+        }
+    </div>
+    
+    <div class="steps-footer">
+        <div class="quick-actions">
+            @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+            {
+                <a asp-action="ViewStampedDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-info btn-sm w-100 mb-2">
+                    <i class="bi bi-file-pdf"></i> View Stamped
+                </a>
+            }
+            @if (Model.Status == DocAttestation.Models.ApplicationStatus.Approved && !string.IsNullOrEmpty(Model.StampedDocumentPath))
+            {
+                <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-success btn-sm w-100">
+                    <i class="bi bi-download"></i> Download
+                </a>
+            }
+        </div>
+    </div>
+</div>
+
