@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<QRScanLog> QRScanLogs { get; set; }
     public DbSet<RefreshToken> RefreshTokens { get; set; }
     public DbSet<Payment> Payments { get; set; }
+    public DbSet<RegisteredDevice> RegisteredDevices { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -158,6 +159,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
                 .WithMany()
                 .HasForeignKey(e => e.VerifiedByUserId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // RegisteredDevice Configuration
+        builder.Entity<RegisteredDevice>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.HasIndex(e => e.DeviceId);
+            entity.HasIndex(e => e.DeviceTokenHash);
+            entity.Property(e => e.DeviceId).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.DeviceName).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Platform).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.DeviceTokenHash).IsRequired().HasMaxLength(64);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

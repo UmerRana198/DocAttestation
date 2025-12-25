@@ -45,11 +45,13 @@ public class AccountController : Controller
     [AllowAnonymous]
     public IActionResult Register()
     {
-        var challenge = _captchaService.GenerateChallenge();
+        var challenge = _captchaService.GenerateSliderChallenge();
         var model = new RegisterViewModel
         {
             CaptchaChallengeId = challenge.ChallengeId,
-            CaptchaQuestion = challenge.Question
+            CaptchaBackgroundImage = challenge.BackgroundImage,
+            CaptchaPuzzleImage = challenge.PuzzlePieceImage,
+            CaptchaPuzzleY = challenge.PuzzleY
         };
         return View(model);
     }
@@ -59,14 +61,15 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
-        // Validate CAPTCHA
-        if (!_captchaService.ValidateChallenge(model.CaptchaAnswer, model.CaptchaChallengeId))
+        // Validate Slider CAPTCHA
+        if (!int.TryParse(model.CaptchaAnswer, out var sliderPosition) || 
+            !_captchaService.ValidateSliderChallenge(model.CaptchaChallengeId, sliderPosition))
         {
             return Json(new
             {
                 success = false,
-                message = "CAPTCHA verification failed. Please try again.",
-                title = "CAPTCHA Error"
+                message = "Slider verification failed. Please try again.",
+                title = "Verification Error"
             });
         }
 
@@ -220,11 +223,13 @@ public class AccountController : Controller
     public IActionResult Login(string? returnUrl = null)
     {
         ViewData["ReturnUrl"] = returnUrl;
-        var challenge = _captchaService.GenerateChallenge();
+        var challenge = _captchaService.GenerateSliderChallenge();
         var model = new LoginViewModel
         {
             CaptchaChallengeId = challenge.ChallengeId,
-            CaptchaQuestion = challenge.Question
+            CaptchaBackgroundImage = challenge.BackgroundImage,
+            CaptchaPuzzleImage = challenge.PuzzlePieceImage,
+            CaptchaPuzzleY = challenge.PuzzleY
         };
         return View(model);
     }
@@ -234,23 +239,28 @@ public class AccountController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
     {
-        // Validate CAPTCHA
-        if (!_captchaService.ValidateChallenge(model.CaptchaAnswer, model.CaptchaChallengeId))
+        // Helper to regenerate captcha
+        void RegenerateCaptcha()
         {
-            ModelState.AddModelError("", "CAPTCHA verification failed. Please try again.");
-            // Regenerate CAPTCHA for retry
-            var challenge = _captchaService.GenerateChallenge();
+            var challenge = _captchaService.GenerateSliderChallenge();
             model.CaptchaChallengeId = challenge.ChallengeId;
-            model.CaptchaQuestion = challenge.Question;
+            model.CaptchaBackgroundImage = challenge.BackgroundImage;
+            model.CaptchaPuzzleImage = challenge.PuzzlePieceImage;
+            model.CaptchaPuzzleY = challenge.PuzzleY;
+        }
+
+        // Validate Slider CAPTCHA
+        if (!int.TryParse(model.CaptchaAnswer, out var sliderPosition) || 
+            !_captchaService.ValidateSliderChallenge(model.CaptchaChallengeId, sliderPosition))
+        {
+            ModelState.AddModelError("", "Slider verification failed. Please try again.");
+            RegenerateCaptcha();
             return View(model);
         }
 
         if (!ModelState.IsValid)
         {
-            // Regenerate CAPTCHA
-            var challenge = _captchaService.GenerateChallenge();
-            model.CaptchaChallengeId = challenge.ChallengeId;
-            model.CaptchaQuestion = challenge.Question;
+            RegenerateCaptcha();
             return View(model);
         }
 
@@ -279,6 +289,7 @@ public class AccountController : Controller
             if (user == null || !user.IsActive)
             {
                 ModelState.AddModelError("", "Invalid login attempt.");
+                RegenerateCaptcha();
                 return View(model);
             }
 
@@ -339,28 +350,19 @@ public class AccountController : Controller
             if (result.IsLockedOut)
             {
                 ModelState.AddModelError("", "Account locked out. Please try again later.");
-                // Regenerate CAPTCHA
-                var challenge = _captchaService.GenerateChallenge();
-                model.CaptchaChallengeId = challenge.ChallengeId;
-                model.CaptchaQuestion = challenge.Question;
+                RegenerateCaptcha();
                 return View(model);
             }
 
             ModelState.AddModelError("", "Invalid login attempt.");
-            // Regenerate CAPTCHA
-            var challenge2 = _captchaService.GenerateChallenge();
-            model.CaptchaChallengeId = challenge2.ChallengeId;
-            model.CaptchaQuestion = challenge2.Question;
+            RegenerateCaptcha();
             return View(model);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during login");
             ModelState.AddModelError("", "An error occurred during login. Please try again.");
-            // Regenerate CAPTCHA
-            var challenge = _captchaService.GenerateChallenge();
-            model.CaptchaChallengeId = challenge.ChallengeId;
-            model.CaptchaQuestion = challenge.Question;
+            RegenerateCaptcha();
             return View(model);
         }
     }
@@ -377,11 +379,13 @@ public class AccountController : Controller
     [AllowAnonymous]
     public IActionResult GetCaptcha()
     {
-        var challenge = _captchaService.GenerateChallenge();
+        var challenge = _captchaService.GenerateSliderChallenge();
         return Json(new
         {
             challengeId = challenge.ChallengeId,
-            question = challenge.Question
+            backgroundImage = challenge.BackgroundImage,
+            puzzleImage = challenge.PuzzlePieceImage,
+            puzzleY = challenge.PuzzleY
         });
     }
 

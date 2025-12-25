@@ -16,11 +16,18 @@ public class LoginViewModel
     [Display(Name = "Remember me")]
     public bool RememberMe { get; set; }
 
-    [Required(ErrorMessage = "CAPTCHA answer is required")]
-    [Display(Name = "CAPTCHA Answer")]
+    // Slider Captcha
+    [Required(ErrorMessage = "Please complete the slider verification")]
+    [Display(Name = "Slider Position")]
     public string CaptchaAnswer { get; set; } = null!;
 
     public string CaptchaChallengeId { get; set; } = null!;
-    public string CaptchaQuestion { get; set; } = null!;
+    
+    // Slider captcha images
+    public string CaptchaBackgroundImage { get; set; } = null!;
+    public string CaptchaPuzzleImage { get; set; } = null!;
+    public int CaptchaPuzzleY { get; set; }
+    
+    // Legacy (not used anymore)
+    public string? CaptchaQuestion { get; set; }
 }
-

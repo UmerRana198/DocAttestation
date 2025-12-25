@@ -1,27 +1,142 @@
 @{
     ViewData["Title"] = "QR Verification";
+    var allowWebVerification = ViewBag.AllowWebVerification ?? false;
 }
 
-<div class="row justify-content-center">
-    <div class="col-md-6">
-        <h2>Verify Document</h2>
-        <p class="text-muted">Scan the QR code on your attested document to verify its authenticity.</p>
-
-        <div class="mb-3">
-            <label for="qrToken" class="form-label">QR Token</label>
-            <input type="text" id="qrToken" class="form-control" placeholder="Enter or scan QR token" />
-        </div>
-
-        <button type="button" class="btn btn-primary" id="verifyBtn">Verify</button>
-
-        <div id="result" class="mt-4" style="display: none;">
-            <div class="card">
-                <div class="card-body">
-                    <h5 id="resultTitle"></h5>
-                    <p id="resultMessage"></p>
-                    <div id="resultDetails"></div>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            @if (!allowWebVerification)
+            {
+                <!-- Mobile App Required Notice -->
+                <div class="text-center mb-5">
+                    <div class="mb-4">
+                        <i class="bi bi-phone display-1 text-primary"></i>
+                    </div>
+                    <h2 class="mb-3">Mobile App Required</h2>
+                    <p class="lead text-muted mb-4">
+                        For security reasons, document verification is only available through our official mobile app.
+                        This ensures the authenticity of verifications and prevents unauthorized scanning.
+                    </p>
                 </div>
-            </div>
+
+                <div class="row g-4 mb-5">
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-android2 display-4 text-success"></i>
+                                </div>
+                                <h5 class="card-title">Android</h5>
+                                <p class="card-text text-muted">Download from Google Play Store</p>
+                                <a href="https://play.google.com/store/apps/details?id=com.mofa.docattestation.scanner" 
+                                   class="btn btn-success" target="_blank">
+                                    <i class="bi bi-google-play me-2"></i>Get on Play Store
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 border-0 shadow-sm">
+                            <div class="card-body text-center p-4">
+                                <div class="mb-3">
+                                    <i class="bi bi-apple display-4 text-dark"></i>
+                                </div>
+                                <h5 class="card-title">iOS</h5>
+                                <p class="card-text text-muted">Download from App Store</p>
+                                <a href="https://apps.apple.com/app/docattestation-scanner" 
+                                   class="btn btn-dark" target="_blank">
+                                    <i class="bi bi-apple me-2"></i>Get on App Store
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 bg-light">
+                    <div class="card-body p-4">
+                        <h5 class="card-title mb-3">
+                            <i class="bi bi-shield-check text-primary me-2"></i>Why Mobile App Only?
+                        </h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                    <div>
+                                        <strong>Device Authentication</strong>
+                                        <p class="text-muted mb-0 small">Only registered devices can verify documents</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                    <div>
+                                        <strong>Encrypted Communication</strong>
+                                        <p class="text-muted mb-0 small">HMAC-SHA256 signed requests</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                    <div>
+                                        <strong>Audit Trail</strong>
+                                        <p class="text-muted mb-0 small">All scans logged with officer identity</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="d-flex align-items-start">
+                                    <i class="bi bi-check-circle-fill text-success me-2 mt-1"></i>
+                                    <div>
+                                        <strong>Anti-Tampering</strong>
+                                        <p class="text-muted mb-0 small">Certificate pinning prevents MITM attacks</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <p class="text-muted">
+                        <i class="bi bi-info-circle me-1"></i>
+                        Officers must register their devices through the app using their credentials.
+                    </p>
+                </div>
+            }
+            else
+            {
+                <!-- Web Verification (when enabled) -->
+                <div class="card border-0 shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="bi bi-qr-code-scan me-2"></i>Verify Document</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted mb-4">Enter the QR code token from your attested document to verify its authenticity.</p>
+
+                        <div class="mb-4">
+                            <label for="qrToken" class="form-label">QR Token</label>
+                            <textarea id="qrToken" class="form-control" rows="3" placeholder="Paste the QR token here..."></textarea>
+                        </div>
+
+                        <button type="button" class="btn btn-primary btn-lg w-100" id="verifyBtn">
+                            <i class="bi bi-shield-check me-2"></i>Verify Document
+                        </button>
+
+                        <div id="result" class="mt-4" style="display: none;">
+                            <div class="card" id="resultCard">
+                                <div class="card-body">
+                                    <h5 id="resultTitle" class="card-title"></h5>
+                                    <p id="resultMessage" class="card-text"></p>
+                                    <div id="resultDetails"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -33,7 +148,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('t');
             if (token) {
-                $('#qrToken').val(token);
+                $('#qrToken').val(decodeURIComponent(token));
             }
 
             $('#verifyBtn').click(function() {
@@ -47,22 +162,49 @@
                     return;
                 }
 
+                $(this).prop('disabled', true).html('<i class="bi bi-hourglass-split me-2"></i>Verifying...');
+
                 $.ajax({
                     url: '@Url.Action("VerifyQR", "Verification")',
                     method: 'GET',
                     data: { t: token },
                     success: function(response) {
                         $('#result').show();
-                        if (response.isValid) {
-                            $('#resultTitle').text('Document Verified').removeClass('text-danger').addClass('text-success');
+                        $('#resultCard').removeClass('border-success border-danger');
+                        
+                        if (response.requiresApp) {
+                            $('#resultCard').addClass('border-warning');
+                            $('#resultTitle').html('<i class="bi bi-phone text-warning me-2"></i>Mobile App Required')
+                                .removeClass('text-success text-danger').addClass('text-warning');
                             $('#resultMessage').text(response.message);
                             $('#resultDetails').html(`
-                                <p><strong>Issuing Authority:</strong> ${response.issuingAuthority || 'N/A'}</p>
-                                <p><strong>Attestation Date:</strong> ${response.attestationDate ? new Date(response.attestationDate).toLocaleDateString() : 'N/A'}</p>
-                                <p><strong>Document Type:</strong> ${response.documentType || 'N/A'}</p>
+                                <a href="${response.appDownloadUrl}" class="btn btn-warning mt-3" target="_blank">
+                                    <i class="bi bi-download me-2"></i>Download Mobile App
+                                </a>
+                            `);
+                        } else if (response.isValid) {
+                            $('#resultCard').addClass('border-success');
+                            $('#resultTitle').html('<i class="bi bi-check-circle-fill text-success me-2"></i>Document Verified')
+                                .removeClass('text-danger text-warning').addClass('text-success');
+                            $('#resultMessage').text(response.message);
+                            $('#resultDetails').html(`
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong><i class="bi bi-building me-2"></i>Issuing Authority:</strong><br>${response.issuingAuthority || 'N/A'}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong><i class="bi bi-file-earmark me-2"></i>Document Type:</strong><br>${response.documentType || 'N/A'}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong><i class="bi bi-calendar-check me-2"></i>Attestation Date:</strong><br>${response.attestationDate ? new Date(response.attestationDate).toLocaleDateString() : 'N/A'}</p>
+                                    </div>
+                                </div>
                             `);
                         } else {
-                            $('#resultTitle').text('Verification Failed').removeClass('text-success').addClass('text-danger');
+                            $('#resultCard').addClass('border-danger');
+                            $('#resultTitle').html('<i class="bi bi-x-circle-fill text-danger me-2"></i>Verification Failed')
+                                .removeClass('text-success text-warning').addClass('text-danger');
                             $('#resultMessage').text(response.message);
                             $('#resultDetails').html('');
                         }
@@ -71,12 +213,14 @@
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
-                            text: 'An error occurred during verification'
+                            text: 'An error occurred during verification. Please try again.'
                         });
+                    },
+                    complete: function() {
+                        $('#verifyBtn').prop('disabled', false).html('<i class="bi bi-shield-check me-2"></i>Verify Document');
                     }
                 });
             });
         });
     </script>
 }
-

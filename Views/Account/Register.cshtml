@@ -185,10 +185,15 @@
             transition: all 0.3s ease;
         }
         
-        .submit-btn:hover {
+        .submit-btn:hover:not(:disabled) {
             background: #218838;
             transform: translateY(-1px);
             box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
         }
         
         .form-links {
@@ -206,6 +211,137 @@
         .form-links a:hover {
             color: #0066cc;
             text-decoration: underline;
+        }
+        
+        /* Slider Captcha Styles */
+        .slider-captcha-container {
+            background: #f8f9fa;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .slider-captcha-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: #495057;
+        }
+        
+        .captcha-image-container {
+            position: relative;
+            width: 100%;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 0.75rem;
+            background: #e9ecef;
+        }
+        
+        .captcha-background {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .captcha-puzzle-piece {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            left: 0;
+            cursor: grab;
+            filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .slider-track {
+            position: relative;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to right, #e9ecef, #dee2e6);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 2px solid #dee2e6;
+        }
+        
+        .slider-progress {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 0;
+            background: linear-gradient(to right, #28a745, #20c997);
+            border-radius: 20px 0 0 20px;
+        }
+        
+        .slider-handle {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 45px;
+            height: 35px;
+            background: white;
+            border-radius: 17px;
+            border: 2px solid #28a745;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 10;
+        }
+        
+        .slider-handle i {
+            color: #28a745;
+            font-size: 1rem;
+        }
+        
+        .slider-text {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 0.85rem;
+            pointer-events: none;
+            user-select: none;
+        }
+        
+        .captcha-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .captcha-status.success {
+            color: #198754;
+        }
+        
+        .captcha-refresh {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 0.5rem;
+        }
+        
+        .btn-refresh {
+            border: 1px solid #28a745;
+            color: #28a745;
+            background: white;
+            border-radius: 6px;
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+        }
+        
+        .btn-refresh:hover {
+            background: #28a745;
+            color: white;
         }
         
         @@media (max-width: 992px) {
@@ -310,27 +446,50 @@
                         </div>
                     </div>
                     
-                    <!-- CAPTCHA -->
-                    <div class="mb-3">
-                        <label class="form-label">
-                            CAPTCHA Verification <span class="required">*</span>
-                        </label>
-                        <div class="d-flex align-items-center gap-2">
-                            <div class="border rounded p-2 bg-light" style="min-width: 120px; text-align: center; font-size: 1.2rem; font-weight: bold;">
-                                @Model.CaptchaQuestion
+                    <!-- Slider CAPTCHA -->
+                    <div class="slider-captcha-container">
+                        <div class="slider-captcha-title">
+                            <i class="bi bi-shield-check text-success"></i>
+                            <span>Slide to Verify <span class="required">*</span></span>
+                        </div>
+                        
+                        <!-- Captcha Image Area -->
+                        <div class="captcha-image-container" id="captchaImageContainer">
+                            <img src="@Model.CaptchaBackgroundImage" class="captcha-background" id="captchaBackground" alt="Captcha Background" />
+                            <img src="@Model.CaptchaPuzzleImage" class="captcha-puzzle-piece" id="captchaPuzzle" alt="Puzzle Piece" style="top: @(Model.CaptchaPuzzleY)px;" />
+                        </div>
+                        
+                        <!-- Slider Track -->
+                        <div class="slider-track" id="sliderTrack">
+                            <div class="slider-progress" id="sliderProgress"></div>
+                            <div class="slider-text" id="sliderText">
+                                <i class="bi bi-arrow-right me-2"></i> Drag to complete puzzle
                             </div>
-                            <input asp-for="CaptchaAnswer" class="form-control" placeholder="Enter the answer" style="max-width: 150px;" />
-                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="refreshCaptcha()" title="Refresh CAPTCHA">
-                                <i class="bi bi-arrow-clockwise"></i>
+                            <div class="slider-handle" id="sliderHandle">
+                                <i class="bi bi-arrows"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="captcha-status" id="captchaStatus" style="display: none;">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span>Verification complete!</span>
+                        </div>
+                        
+                        <!-- Refresh -->
+                        <div class="captcha-refresh">
+                            <button type="button" class="btn btn-refresh btn-sm" onclick="refreshCaptcha()">
+                                <i class="bi bi-arrow-clockwise me-1"></i> Refresh
                             </button>
                         </div>
-                        <input type="hidden" asp-for="CaptchaChallengeId" />
-                        <input type="hidden" asp-for="CaptchaQuestion" />
-                        <span asp-validation-for="CaptchaAnswer" class="text-danger"></span>
-                        <div class="form-hint">Please solve the math problem</div>
+                        
+                        <!-- Hidden inputs -->
+                        <input type="hidden" asp-for="CaptchaAnswer" id="CaptchaAnswer" />
+                        <input type="hidden" asp-for="CaptchaChallengeId" id="CaptchaChallengeId" />
+                        <input type="hidden" id="CaptchaPuzzleY" value="@Model.CaptchaPuzzleY" />
                     </div>
                     
-                    <button type="submit" class="submit-btn">
+                    <button type="submit" class="submit-btn" id="submitBtn" disabled>
                         SUBMIT
                     </button>
                 </form>
@@ -363,12 +522,123 @@
             }
         }
         
+        // Slider Captcha Logic
+        (function() {
+            const sliderHandle = document.getElementById('sliderHandle');
+            const sliderTrack = document.getElementById('sliderTrack');
+            const sliderProgress = document.getElementById('sliderProgress');
+            const sliderText = document.getElementById('sliderText');
+            const puzzlePiece = document.getElementById('captchaPuzzle');
+            const captchaAnswer = document.getElementById('CaptchaAnswer');
+            const submitBtn = document.getElementById('submitBtn');
+            const captchaStatus = document.getElementById('captchaStatus');
+            
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+            let isVerified = false;
+            
+            const maxSlide = sliderTrack.offsetWidth - sliderHandle.offsetWidth;
+            
+            function updatePosition(x) {
+                const boundedX = Math.max(0, Math.min(x, maxSlide));
+                sliderHandle.style.left = boundedX + 'px';
+                sliderProgress.style.width = boundedX + 'px';
+                
+                const puzzleX = (boundedX / maxSlide) * 250;
+                puzzlePiece.style.left = puzzleX + 'px';
+                captchaAnswer.value = Math.round(puzzleX);
+                currentX = boundedX;
+            }
+            
+            function onDragStart(e) {
+                if (isVerified) return;
+                isDragging = true;
+                startX = (e.type === 'mousedown') ? e.clientX : e.touches[0].clientX;
+                sliderHandle.style.cursor = 'grabbing';
+                sliderText.style.opacity = '0';
+            }
+            
+            function onDragMove(e) {
+                if (!isDragging) return;
+                e.preventDefault();
+                const clientX = (e.type === 'mousemove') ? e.clientX : e.touches[0].clientX;
+                const diff = clientX - startX;
+                const newX = currentX + diff;
+                updatePosition(newX);
+                startX = clientX;
+            }
+            
+            function onDragEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                sliderHandle.style.cursor = 'grab';
+                
+                if (currentX > maxSlide * 0.7) {
+                    showSuccess();
+                } else {
+                    resetSlider();
+                }
+            }
+            
+            function showSuccess() {
+                isVerified = true;
+                submitBtn.disabled = false;
+                sliderHandle.innerHTML = '<i class="bi bi-check-lg"></i>';
+                sliderHandle.style.borderColor = '#198754';
+                sliderHandle.querySelector('i').style.color = '#198754';
+                sliderProgress.style.background = 'linear-gradient(to right, #198754, #20c997)';
+                captchaStatus.style.display = 'flex';
+                captchaStatus.className = 'captcha-status success';
+            }
+            
+            function resetSlider() {
+                currentX = 0;
+                updatePosition(0);
+                sliderText.style.opacity = '1';
+            }
+            
+            sliderHandle.addEventListener('mousedown', onDragStart);
+            document.addEventListener('mousemove', onDragMove);
+            document.addEventListener('mouseup', onDragEnd);
+            sliderHandle.addEventListener('touchstart', onDragStart);
+            document.addEventListener('touchmove', onDragMove, { passive: false });
+            document.addEventListener('touchend', onDragEnd);
+            sliderHandle.addEventListener('selectstart', (e) => e.preventDefault());
+        })();
+        
         function refreshCaptcha() {
             $.get('@Url.Action("GetCaptcha", "Account")', function(data) {
-                $('#CaptchaQuestion').val(data.question);
-                $('.border.rounded.p-2.bg-light').text(data.question);
+                $('#captchaBackground').attr('src', data.backgroundImage);
+                $('#captchaPuzzle').attr('src', data.puzzleImage);
+                $('#captchaPuzzle').css('top', data.puzzleY + 'px');
                 $('#CaptchaChallengeId').val(data.challengeId);
+                $('#CaptchaPuzzleY').val(data.puzzleY);
                 $('#CaptchaAnswer').val('');
+                
+                // Reset slider
+                const sliderHandle = document.getElementById('sliderHandle');
+                const sliderProgress = document.getElementById('sliderProgress');
+                const sliderText = document.getElementById('sliderText');
+                const puzzlePiece = document.getElementById('captchaPuzzle');
+                const submitBtn = document.getElementById('submitBtn');
+                const captchaStatus = document.getElementById('captchaStatus');
+                
+                sliderHandle.style.left = '0';
+                sliderProgress.style.width = '0';
+                puzzlePiece.style.left = '0';
+                sliderText.style.opacity = '1';
+                sliderHandle.innerHTML = '<i class="bi bi-arrows"></i>';
+                sliderHandle.style.borderColor = '#28a745';
+                sliderProgress.style.background = 'linear-gradient(to right, #28a745, #20c997)';
+                submitBtn.disabled = true;
+                captchaStatus.style.display = 'none';
+            }).fail(function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to refresh captcha. Please try again.'
+                });
             });
         }
 
@@ -408,32 +678,14 @@
                                 text: response.message
                             });
                             submitButton.prop('disabled', false).text('SUBMIT');
-                            // Refresh CAPTCHA on error
                             refreshCaptcha();
                         }
                     },
                     error: function(xhr, status, error) {
                         var errorMessage = 'An error occurred. Please try again.';
                         
-                        if (xhr.responseJSON) {
-                            if (xhr.responseJSON.message) {
-                                errorMessage = xhr.responseJSON.message;
-                            } else if (xhr.responseJSON.error) {
-                                errorMessage = xhr.responseJSON.error;
-                            }
-                        } else if (xhr.responseText) {
-                            try {
-                                var response = JSON.parse(xhr.responseText);
-                                if (response.message) {
-                                    errorMessage = response.message;
-                                }
-                            } catch (e) {
-                                if (xhr.status === 400) {
-                                    errorMessage = 'Invalid request. Please check your input.';
-                                } else if (xhr.status === 500) {
-                                    errorMessage = 'Server error. Please try again later.';
-                                }
-                            }
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
                         }
                         
                         Swal.fire({
@@ -442,7 +694,6 @@
                             text: errorMessage
                         });
                         submitButton.prop('disabled', false).text('SUBMIT');
-                        // Refresh CAPTCHA on error
                         refreshCaptcha();
                     }
                 });
@@ -452,4 +703,3 @@
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
 </body>
 </html>
-

@@ -122,12 +122,14 @@ builder.Services.AddScoped<IWorkflowService, WorkflowService>();
 builder.Services.AddScoped<IVerificationService, VerificationService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<ICaptchaService, CaptchaService>();
+builder.Services.AddScoped<IMobileAppService, MobileAppService>();
 
 // Configuration Options
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.Configure<EncryptionSettings>(builder.Configuration.GetSection("EncryptionSettings"));
 builder.Services.Configure<QRCodeSettings>(builder.Configuration.GetSection("QRCodeSettings"));
 builder.Services.Configure<FileUploadSettings>(builder.Configuration.GetSection("FileUploadSettings"));
+builder.Services.Configure<MobileAppSettings>(builder.Configuration.GetSection("MobileAppSettings"));
 
 // HTTP Context Accessor
 builder.Services.AddHttpContextAccessor();
