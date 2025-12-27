@@ -1,5 +1,6 @@
 using DocAttestation.Configuration;
 using DocAttestation.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -32,7 +33,7 @@ public class MobileVerificationController : ControllerBase
     /// Register a device for QR scanning (requires officer authentication)
     /// </summary>
     [HttpPost("device/register")]
-    [Authorize(Roles = "VerificationOfficer,Supervisor,AttestationOfficer,Admin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "VerificationOfficer,Supervisor,AttestationOfficer,Admin")]
     public async Task<IActionResult> RegisterDevice([FromBody] DeviceRegistrationRequest request)
     {
         if (!ModelState.IsValid)
@@ -124,7 +125,7 @@ public class MobileVerificationController : ControllerBase
     /// Get device status
     /// </summary>
     [HttpGet("device/status")]
-    [Authorize(Roles = "VerificationOfficer,Supervisor,AttestationOfficer,Admin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "VerificationOfficer,Supervisor,AttestationOfficer,Admin")]
     public async Task<IActionResult> GetDeviceStatus()
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -158,7 +159,7 @@ public class MobileVerificationController : ControllerBase
     /// Deactivate a device
     /// </summary>
     [HttpPost("device/{deviceId}/deactivate")]
-    [Authorize(Roles = "VerificationOfficer,Supervisor,AttestationOfficer,Admin")]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme, Roles = "VerificationOfficer,Supervisor,AttestationOfficer,Admin")]
     public async Task<IActionResult> DeactivateDevice(int deviceId)
     {
         var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
@@ -179,12 +180,24 @@ public class MobileVerificationController : ControllerBase
     [AllowAnonymous]
     public IActionResult HealthCheck()
     {
+        var request = HttpContext.Request;
+        var baseUrl = _settings.BaseApiUrl ?? $"{request.Scheme}://{request.Host}";
+        
         return Ok(new
         {
             status = "healthy",
             serverTime = DateTime.UtcNow,
             minimumAppVersion = _settings.MinimumAppVersion,
-            allowWebVerification = _settings.AllowWebVerification
+            allowWebVerification = _settings.AllowWebVerification,
+            baseApiUrl = baseUrl,
+            endpoints = new
+            {
+                health = $"{baseUrl}/api/mobile/health",
+                login = $"{baseUrl}/api/auth/login",
+                refresh = $"{baseUrl}/api/auth/refresh",
+                registerDevice = $"{baseUrl}/api/mobile/device/register",
+                verify = $"{baseUrl}/api/mobile/verify"
+            }
         });
     }
 

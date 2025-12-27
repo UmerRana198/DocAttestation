@@ -1,0 +1,288 @@
+{
+	"info": {
+		"_postman_id": "docattestation-mobile-api",
+		"name": "DocAttestation Mobile API",
+		"description": "API collection for testing DocAttestation Mobile App endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://103.175.122.31:81/api/mobile/health",
+					"protocol": "http",
+					"host": [
+						"103",
+						"175",
+						"122",
+						"31"
+					],
+					"port": "81",
+					"path": [
+						"api",
+						"mobile",
+						"health"
+					]
+				},
+				"description": "Check if the API server is healthy and get endpoint information"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Login (Get Auth Token)",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"email\": \"officer@example.com\",\n    \"password\": \"YourPassword123\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://103.175.122.31:81/api/auth/login",
+					"protocol": "http",
+					"host": [
+						"103",
+						"175",
+						"122",
+						"31"
+					],
+					"port": "81",
+					"path": [
+						"api",
+						"auth",
+						"login"
+					]
+				},
+				"description": "Login to get JWT access token. Use an officer account (VerificationOfficer, Supervisor, AttestationOfficer, or Admin)."
+			},
+			"response": []
+		},
+		{
+			"name": "3. Register Device",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// This script runs before the request",
+							"// Make sure you have logged in first and copied the token",
+							"// The token should be set in the Authorization header"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 200) {",
+							"    var jsonData = pm.response.json();",
+							"    if (jsonData.success && jsonData.deviceToken) {",
+							"        pm.environment.set(\"deviceToken\", jsonData.deviceToken);",
+							"        console.log(\"Device token saved to environment\");",
+							"    }",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"description": "JWT token from login response"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"deviceId\": \"test-device-12345\",\n    \"deviceName\": \"Test Android Device\",\n    \"platform\": \"Android\",\n    \"osVersion\": \"Android 13\",\n    \"appVersion\": \"1.0.0\",\n    \"appSignature\": \"test-signature-hash\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://103.175.122.31:81/api/mobile/device/register",
+					"protocol": "http",
+					"host": [
+						"103",
+						"175",
+						"122",
+						"31"
+					],
+					"port": "81",
+					"path": [
+						"api",
+						"mobile",
+						"device",
+						"register"
+					]
+				},
+				"description": "Register a device for QR scanning. Requires:\n- Valid JWT token (from login)\n- User must have one of these roles: VerificationOfficer, Supervisor, AttestationOfficer, or Admin\n\n**Request Body:**\n- `deviceId`: Unique device identifier (e.g., Android ID)\n- `deviceName`: Human-readable device name\n- `platform`: \"Android\" or \"iOS\"\n- `osVersion`: OS version string\n- `appVersion`: App version (must meet minimum version requirement)\n- `appSignature`: App integrity signature hash\n\n**Response:**\n- `success`: true/false\n- `message`: Status message\n- `deviceToken`: Device token for subsequent API calls (if successful)\n- `tokenExpiry`: Token expiration datetime"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Get Device Status",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{accessToken}}",
+						"description": "JWT token from login response"
+					}
+				],
+				"url": {
+					"raw": "http://103.175.122.31:81/api/mobile/device/status",
+					"protocol": "http",
+					"host": [
+						"103",
+						"175",
+						"122",
+						"31"
+					],
+					"port": "81",
+					"path": [
+						"api",
+						"mobile",
+						"device",
+						"status"
+					]
+				},
+				"description": "Get all registered devices for the authenticated user"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Verify QR Code",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "X-App-Version",
+						"value": "1.0.0"
+					},
+					{
+						"key": "X-Platform",
+						"value": "Android"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"qrToken\": \"encrypted-qr-token-from-app\",\n    \"deviceToken\": \"{{deviceToken}}\",\n    \"signature\": \"hmac-signature\",\n    \"timestamp\": \"2025-01-01T00:00:00Z\",\n    \"nonce\": \"random-nonce\",\n    \"latitude\": null,\n    \"longitude\": null\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://103.175.122.31:81/api/mobile/verify",
+					"protocol": "http",
+					"host": [
+						"103",
+						"175",
+						"122",
+						"31"
+					],
+					"port": "81",
+					"path": [
+						"api",
+						"mobile",
+						"verify"
+					]
+				},
+				"description": "Verify a QR code from the mobile app. Requires device token and HMAC signature."
+			},
+			"response": []
+		},
+		{
+			"name": "6. Refresh Token",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"refreshToken\": \"{{refreshToken}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://103.175.122.31:81/api/auth/refresh",
+					"protocol": "http",
+					"host": [
+						"103",
+						"175",
+						"122",
+						"31"
+					],
+					"port": "81",
+					"path": [
+						"api",
+						"auth",
+						"refresh"
+					]
+				},
+				"description": "Refresh the JWT access token using a refresh token"
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://103.175.122.31:81",
+			"type": "string"
+		},
+		{
+			"key": "accessToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refreshToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "deviceToken",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+

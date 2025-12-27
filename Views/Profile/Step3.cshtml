@@ -44,21 +44,160 @@
                         <input type="hidden" name="EditingApplicationId" id="EditingApplicationId" value="@Context.Request.Query["applicationId"]" />
                     }
 
-                    <div class="form-group mb-4">
-                        <label asp-for="VerificationType" class="form-label fw-bold"></label>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="VerificationType" value="0" id="verificationNormal" checked>
-                            <label class="form-check-label" for="verificationNormal">
-                                Normal Verification - PKR 500 per document (Processing time: 20 days)
-                            </label>
+                    @if (!string.IsNullOrEmpty(Model.ApplicationNumber))
+                    {
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold">Application Number</label>
+                                    <input type="text" class="form-control fw-bold" value="@Model.ApplicationNumber" readonly />
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold">Verification Type</label>
+                                    <input type="text" class="form-control" value="@(Model.VerificationType == DocAttestation.Models.VerificationType.Normal ? "Normal" : "Urgent")" readonly />
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" asp-for="VerificationType" value="1" id="verificationUrgent">
-                            <label class="form-check-label" for="verificationUrgent">
-                                Urgent Verification - PKR 1,500 per document (Processing time: 24 hours)
-                            </label>
+                    }
+
+                    @if (string.IsNullOrEmpty(Model.ApplicationNumber))
+                    {
+                        <div class="form-group mb-4">
+                            <label asp-for="VerificationType" class="form-label fw-bold">Verification Type</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" asp-for="VerificationType" value="0" id="verificationNormal" checked>
+                                <label class="form-check-label" for="verificationNormal">
+                                    Normal Verification - PKR 500 per document ONE WEEK AFTER PHYSICAL DOC RECEIVE
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" asp-for="VerificationType" value="1" id="verificationUrgent">
+                                <label class="form-check-label" for="verificationUrgent">
+                                    Urgent Verification - PKR 1,500 per document (Processing time: 24 hours)
+                                </label>
+                            </div>
+                            <span asp-validation-for="VerificationType" class="text-danger"></span>
                         </div>
-                        <span asp-validation-for="VerificationType" class="text-danger"></span>
+                    }
+                    else
+                    {
+                        <input type="hidden" asp-for="VerificationType" />
+                    }
+
+                    <hr class="my-4" />
+
+                    <!-- City and Document Submission Method in One Row -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="City" class="form-label">City <span class="text-danger">*</span></label>
+                                <select asp-for="City" class="form-select" required>
+                                    <option value="">-- Select City --</option>
+                                    @{
+                                        var cities = new[] { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala", "Hyderabad", "Other" };
+                                    }
+                                    @foreach (var cityOption in cities)
+                                    {
+                                        <option value="@cityOption" selected="@(Model.City == cityOption)">@cityOption</option>
+                                    }
+                                </select>
+                                <span asp-validation-for="City" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="DocumentSubmissionMethod" class="form-label">Original Document Submission <span class="text-danger">*</span></label>
+                                <select asp-for="DocumentSubmissionMethod" class="form-select" id="documentSubmissionMethod" required>
+                                    <option value="">-- Select Method --</option>
+                                    <option value="0" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical)">Physical</option>
+                                    <option value="1" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS)">TCS (Courier Service)</option>
+                                </select>
+                                <span asp-validation-for="DocumentSubmissionMethod" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submission By and Blood Relation in One Row (shown only if Physical is selected) -->
+                    <div class="row mb-3" id="submissionByWrapper" style="display: @(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical ? "block" : "none");">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="SubmissionBy" class="form-label">Submission By <span class="text-danger">*</span></label>
+                                @if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical)
+                                {
+                                    <select asp-for="SubmissionBy" class="form-select" id="submissionBy" required>
+                                        <option value="">-- Select --</option>
+                                        <option value="0" selected="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself)">By Yourself</option>
+                                        <option value="1" selected="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)">Blood Relation</option>
+                                    </select>
+                                }
+                                else
+                                {
+                                    <select asp-for="SubmissionBy" class="form-select" id="submissionBy">
+                                        <option value="">-- Select --</option>
+                                        <option value="0" selected="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself)">By Yourself</option>
+                                        <option value="1" selected="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)">Blood Relation</option>
+                                    </select>
+                                }
+                                <span asp-validation-for="SubmissionBy" class="text-danger"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group" id="bloodRelationTypeWrapper" style="display: @(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation ? "block" : "none");">
+                                <label asp-for="RelationType" class="form-label">Blood Relation <span class="text-danger">*</span></label>
+                                @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                {
+                                    <select asp-for="RelationType" class="form-select" id="relationType" required>
+                                        <option value="">-- Select Relation --</option>
+                                        @{
+                                            var relationTypes = new[] { "Father", "Mother", "Brother", "Sister", "Son", "Daughter", "Husband", "Wife", "Uncle", "Aunt", "Cousin", "Grandfather", "Grandmother", "Other" };
+                                        }
+                                        @foreach (var relation in relationTypes)
+                                        {
+                                            <option value="@relation" selected="@(Model.RelationType == relation)">@relation</option>
+                                        }
+                                    </select>
+                                }
+                                else
+                                {
+                                    <select asp-for="RelationType" class="form-select" id="relationType">
+                                        <option value="">-- Select Relation --</option>
+                                        @{
+                                            var relationTypes = new[] { "Father", "Mother", "Brother", "Sister", "Son", "Daughter", "Husband", "Wife", "Uncle", "Aunt", "Cousin", "Grandfather", "Grandmother", "Other" };
+                                        }
+                                        @foreach (var relation in relationTypes)
+                                        {
+                                            <option value="@relation" selected="@(Model.RelationType == relation)">@relation</option>
+                                        }
+                                    </select>
+                                }
+                                <span asp-validation-for="RelationType" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Relation CNIC Number (shown only if Blood Relation is selected) -->
+                    <div class="row mb-3" id="bloodRelationCNICSection" style="display: @(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation ? "block" : "none");">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label asp-for="RelationCNIC" class="form-label">Relation CNIC Number <span class="text-danger">*</span></label>
+                                @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                {
+                                    <input type="text" asp-for="RelationCNIC" class="form-control" id="relationCNIC" 
+                                           placeholder="Enter CNIC without dashes (e.g., 4123456789123)" 
+                                           maxlength="13" pattern="[0-9]{13}" required />
+                                }
+                                else
+                                {
+                                    <input type="text" asp-for="RelationCNIC" class="form-control" id="relationCNIC" 
+                                           placeholder="Enter CNIC without dashes (e.g., 4123456789123)" 
+                                           maxlength="13" pattern="[0-9]{13}" />
+                                }
+                                <small class="text-muted">Enter 13-digit CNIC number without dashes</small>
+                                <span asp-validation-for="RelationCNIC" class="text-danger"></span>
+                            </div>
+                        </div>
                     </div>
 
                     <hr class="my-4" />
@@ -146,6 +285,52 @@
             var maxDocuments = 5;
             var documentNames = @Html.Raw(Json.Serialize(documentNames));
             var groupedDocumentNames = @Html.Raw(Json.Serialize(groupedDocumentNames));
+            
+            // Handle Document Submission Method change
+            $('#documentSubmissionMethod').on('change', function() {
+                const method = $(this).val();
+                if (method === '0') { // Physical
+                    $('#submissionByWrapper').show();
+                    $('#submissionBy').prop('required', true);
+                } else {
+                    $('#submissionByWrapper').hide();
+                    $('#submissionBy').prop('required', false);
+                    $('#submissionBy').val('');
+                    $('#bloodRelationTypeWrapper').hide();
+                    $('#bloodRelationCNICSection').hide();
+                    $('#relationType').prop('required', false);
+                    $('#relationCNIC').prop('required', false);
+                    $('#relationType').val('');
+                    $('#relationCNIC').val('');
+                }
+            });
+            
+            // Handle Submission By change
+            $('#submissionBy').on('change', function() {
+                const submissionBy = $(this).val();
+                if (submissionBy === '1') { // Blood Relation
+                    $('#bloodRelationTypeWrapper').show();
+                    $('#bloodRelationCNICSection').show();
+                    $('#relationType').prop('required', true);
+                    $('#relationCNIC').prop('required', true);
+                } else {
+                    $('#bloodRelationTypeWrapper').hide();
+                    $('#bloodRelationCNICSection').hide();
+                    $('#relationType').prop('required', false);
+                    $('#relationCNIC').prop('required', false);
+                    $('#relationType').val('');
+                    $('#relationCNIC').val('');
+                }
+            });
+            
+            // Format CNIC input (only numbers, max 13 digits)
+            $('#relationCNIC').on('input', function() {
+                let value = $(this).val().replace(/\D/g, '');
+                if (value.length > 13) {
+                    value = value.substring(0, 13);
+                }
+                $(this).val(value);
+            });
             
             // Add document
             $('#addDocumentBtn').click(function() {

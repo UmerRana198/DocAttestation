@@ -43,12 +43,7 @@
                     </li>
                     <li class="nav-item" role="presentation">
                         <button class="nav-link" id="payment-tab" data-bs-toggle="tab" data-bs-target="#payment" type="button" role="tab" aria-controls="payment" aria-selected="false">
-                            <i class="bi bi-credit-card"></i> Payment & Time Slot
-                        </button>
-                    </li>
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link" id="declaration-tab" data-bs-toggle="tab" data-bs-target="#declaration" type="button" role="tab" aria-controls="declaration" aria-selected="false">
-                            <i class="bi bi-shield-check"></i> Declaration
+                            <i class="bi bi-credit-card"></i> Payment and Declaration
                         </button>
                     </li>
                 </ul>
@@ -152,6 +147,100 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- City and Document Submission Method in One Row -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label for="city" class="form-label">City <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="city" name="city" required>
+                                                <option value="">-- Select City --</option>
+                                                @{
+                                                    var cities = new[] { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala", "Hyderabad", "Other" };
+                                                }
+                                                @foreach (var cityOption in cities)
+                                                {
+                                                    <option value="@cityOption" selected="@(Model.City == cityOption)">@cityOption</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Original Document Submission <span class="text-danger">*</span></label>
+                                            @{
+                                                string submissionMethodText = "";
+                                                if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical)
+                                                {
+                                                    if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself)
+                                                    {
+                                                        submissionMethodText = "Physical - By Yourself";
+                                                    }
+                                                    else if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                                    {
+                                                        submissionMethodText = "Physical - Blood Relation";
+                                                    }
+                                                    else
+                                                    {
+                                                        submissionMethodText = "Physical";
+                                                    }
+                                                }
+                                                else if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS)
+                                                {
+                                                    submissionMethodText = "TCS (Courier Service)";
+                                                }
+                                            }
+                                            <input type="text" class="form-control" value="@submissionMethodText" readonly />
+                                            @if (Model.DocumentSubmissionMethod.HasValue)
+                                            {
+                                                <input type="hidden" id="documentSubmissionMethod" name="documentSubmissionMethod" value="@((int)Model.DocumentSubmissionMethod.Value)" />
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Submission By and Blood Relation in One Row (Display Only - shown if Physical is selected) -->
+                                @if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical && Model.SubmissionBy.HasValue)
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Submission By</label>
+                                                <input type="text" class="form-control" value="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself ? "By Yourself" : "Blood Relation")" readonly />
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                            {
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label">Blood Relation</label>
+                                                    <input type="text" class="form-control" value="@Model.RelationType" readonly />
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Relation CNIC Number (shown if Blood Relation is selected) -->
+                                    @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                    {
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group mb-3">
+                                                    <label class="form-label">Relation CNIC Number</label>
+                                                    <input type="text" class="form-control" value="@Model.RelationCNIC" readonly />
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="alert alert-warning mb-3">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    <strong>Important:</strong> The blood relation person must bring their <strong>original CNIC</strong> (having CNIC number: <strong>@Model.RelationCNIC</strong>) when submitting documents on your behalf.
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
                             </div>
                         </div>
                     </div>
@@ -239,11 +328,33 @@
                                             <input type="text" class="form-control fw-bold text-success" value="PKR @Model.Fee.ToString("N2")" readonly />
                                             @if (Model.Documents != null && Model.Documents.Any())
                                             {
-                                                <small class="text-muted">Fee for @Model.Documents.Count document(s) - PKR @((Model.Fee / Model.Documents.Count).ToString("N2")) per document</small>
+
+                                                var feePerDocument = (Model.Fee / Model.Documents.Count).ToString("N2");
+                                                <small class="text-muted">
+                                                    PKR @feePerDocument per document
+                                                </small>
                                             }
                                         </div>
                                     </div>
                                 </div>
+                                
+                                
+                                <!-- TCS Number Display (After Payment) -->
+                                @if (Model.IsPaid && !string.IsNullOrEmpty(Model.TCSNumber))
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="alert alert-success">
+                                                <i class="bi bi-truck"></i> 
+                                                <strong>TCS Tracking Number:</strong> 
+                                                <span class="fw-bold">@Model.TCSNumber</span>
+                                                <br />
+                                                <small>Please use this number to track your document shipment via TCS.</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                                
                                 @if (Model.TimeSlot.HasValue)
                                 {
                                     <div class="row">
@@ -260,28 +371,17 @@
                                     <i class="bi bi-info-circle"></i> 
                                     Please ensure payment is made before submitting the application.
                                 </div>
-                                @if (!Model.IsPaid)
+                                
+                                @if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical && Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
                                 {
-                                    <div class="d-grid gap-2 mt-3">
-                                        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#paymentModal">
-                                            <i class="bi bi-credit-card"></i> PAY & SUBMIT - PKR @Model.Fee.ToString("N2")
-                                        </button>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-person-badge"></i>
+                                        <strong>Blood Relation Submission:</strong> The blood relation person (<strong>@Model.RelationType</strong>) must bring their <strong>original CNIC</strong> (CNIC Number: <strong>@Model.RelationCNIC</strong>) when submitting documents on your behalf at the assigned time slot.
                                     </div>
                                 }
-                                else
-                                {
-                                    <div class="alert alert-success">
-                                        <i class="bi bi-check-circle"></i> Payment completed successfully!
-                                    </div>
-                                }
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Declaration Tab -->
-                    <div class="tab-pane fade" id="declaration" role="tabpanel" aria-labelledby="declaration-tab">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body">
+                                
+                                <!-- Declaration Section -->
+                                <hr class="my-4" />
                                 <div class="form-check mb-3">
                                     <input class="form-check-input" type="checkbox" id="declarationCheckbox" required>
                                     <label class="form-check-label" for="declarationCheckbox">
@@ -294,6 +394,21 @@
                                         </ul>
                                     </label>
                                 </div>
+                                
+                                @if (!Model.IsPaid)
+                                {
+                                    <div class="d-grid gap-2 mt-3">
+                                        <button type="button" class="btn btn-primary btn-lg" id="paySubmitBtn" disabled>
+                                            <i class="bi bi-credit-card"></i> PAY & SUBMIT - PKR @Model.Fee.ToString("N2")
+                                        </button>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="alert alert-success">
+                                        <i class="bi bi-check-circle"></i> Payment completed successfully!
+                                    </div>
+                                }
                             </div>
                         </div>
                     </div>
@@ -331,6 +446,31 @@
                     <label class="form-label">Amount</label>
                     <input type="text" class="form-control" value="PKR @Model.Fee.ToString("N2")" readonly />
                 </div>
+                
+                <!-- Email and OTP Section -->
+                <div class="mb-3">
+                    <label for="paymentEmail" class="form-label">Email Address <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="email" class="form-control" id="paymentEmail" placeholder="Enter your email address" value="@(profile?.Email ?? "")" />
+                        <button type="button" class="btn btn-outline-primary" id="sendOTPBtn">
+                            <i class="bi bi-send"></i> Send OTP
+                        </button>
+                    </div>
+                    <small class="text-muted">We'll send a verification code to this email</small>
+                </div>
+                
+                <div class="mb-3" id="otpSection" style="display: none;">
+                    <label for="otpCode" class="form-label">Enter OTP <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="otpCode" placeholder="Enter 6-digit OTP" maxlength="6" />
+                        <button type="button" class="btn btn-outline-success" id="verifyOTPBtn">
+                            <i class="bi bi-check-circle"></i> Verify
+                        </button>
+                    </div>
+                    <small class="text-muted">Check your email for the 6-digit code</small>
+                    <div id="otpStatus" class="mt-2"></div>
+                </div>
+                
                 <div class="mb-3">
                     <label for="cardNumber" class="form-label">Card Number</label>
                     <input type="text" class="form-control" id="cardNumber" placeholder="Enter card number" maxlength="19" />
@@ -342,7 +482,7 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="processPaymentBtn">
+                <button type="button" class="btn btn-primary" id="processPaymentBtn" disabled>
                     <i class="bi bi-check-circle"></i> PAY & SUBMIT
                 </button>
             </div>
@@ -353,16 +493,305 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
+            
+            // Validation function for payment button
+            function validatePaymentButton() {
+                const city = $('#city').val();
+                const documentSubmissionMethod = $('#documentSubmissionMethod').val();
+                const declarationChecked = $('#declarationCheckbox').is(':checked');
+                
+                let isValid = true;
+                
+                // Check city
+                if (!city) {
+                    isValid = false;
+                }
+                
+                // Check document submission method (from hidden field)
+                if (!documentSubmissionMethod) {
+                    isValid = false;
+                }
+                
+                // Check declaration
+                if (!declarationChecked) {
+                    isValid = false;
+                }
+                
+                // Enable/disable payment button
+                $('#paySubmitBtn').prop('disabled', !isValid);
+                
+                return isValid;
+            }
+            
+            // Validate on field changes
+            $('#city, #declarationCheckbox').on('change input', function() {
+                validatePaymentButton();
+            });
+            
+            // Initial validation
+            validatePaymentButton();
+            
+            // Handle payment button click - validate before opening modal
+            $('#paySubmitBtn').on('click', function() {
+                if (validatePaymentButton()) {
+                    $('#paymentModal').modal('show');
+                } else {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Incomplete Information',
+                        text: 'Please fill all required fields and check the declaration before proceeding to payment.'
+                    });
+                }
+            });
+
+            // OTP Verification
+            let otpVerified = false;
+            let verifiedEmail = '';
+
+            // Send OTP
+            $('#sendOTPBtn').on('click', function() {
+                const email = $('#paymentEmail').val().trim();
+                
+                // Validate email format
+                const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+                if (!email || !emailRegex.test(email)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Email',
+                        text: 'Please enter a valid email address'
+                    });
+                    return;
+                }
+
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Sending...');
+
+                // Get anti-forgery token
+                const token = $('input[name="__RequestVerificationToken"]').val();
+                if (!token) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Security Error',
+                        text: 'Security token not found. Please refresh the page and try again.'
+                    });
+                    $('#sendOTPBtn').prop('disabled', false).html('<i class="bi bi-send"></i> Send OTP');
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("SendOTP", "Profile")',
+                    method: 'POST',
+                    data: { 
+                        email: email,
+                        __RequestVerificationToken: token
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'OTP Sent',
+                                text: response.message || 'OTP has been sent to your email address. Please check your inbox (and spam folder).'
+                            });
+                            $('#otpSection').slideDown(300);
+                            $('#otpCode').val('').focus();
+                            otpVerified = false;
+                            verifiedEmail = '';
+                            $('#otpStatus').html('');
+                            updatePaymentButtonState();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.message || 'Failed to send OTP. Please try again.'
+                            });
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('OTP Send Error:', { status, error, responseText: xhr.responseText });
+                        let errorMessage = 'Failed to send OTP. Please try again.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        } else if (xhr.status === 400) {
+                            errorMessage = 'Invalid request. Please check your email address.';
+                        } else if (xhr.status === 500) {
+                            errorMessage = 'Server error. Please try again later or contact support.';
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage
+                        });
+                    },
+                    complete: function() {
+                        $('#sendOTPBtn').prop('disabled', false).html('<i class="bi bi-send"></i> Send OTP');
+                    }
+                });
+            });
+
+            // Verify OTP
+            $('#verifyOTPBtn').on('click', function() {
+                const email = $('#paymentEmail').val().trim();
+                const otp = $('#otpCode').val().trim();
+
+                if (!email || !otp) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Required Fields',
+                        text: 'Please enter both email and OTP'
+                    });
+                    return;
+                }
+
+                if (otp.length !== 6 || !/^\d+$/.test(otp)) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid OTP',
+                        text: 'OTP must be a 6-digit number'
+                    });
+                    return;
+                }
+
+                $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Verifying...');
+
+                // Get anti-forgery token
+                const token = $('input[name="__RequestVerificationToken"]').val();
+                if (!token) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Security Error',
+                        text: 'Security token not found. Please refresh the page and try again.'
+                    });
+                    $('#verifyOTPBtn').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Verify');
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("VerifyOTP", "Profile")',
+                    method: 'POST',
+                    data: { 
+                        email: email, 
+                        otp: otp,
+                        __RequestVerificationToken: token
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Verified',
+                                text: response.message || 'OTP verified successfully',
+                                timer: 2000,
+                                showConfirmButton: false
+                            });
+                            otpVerified = true;
+                            verifiedEmail = email;
+                            $('#otpStatus').html('<div class="alert alert-success mb-0"><i class="bi bi-check-circle"></i> OTP Verified</div>');
+                            $('#otpCode, #verifyOTPBtn').prop('disabled', true);
+                            updatePaymentButtonState();
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Verification Failed',
+                                text: response.message || 'Invalid OTP. Please try again.'
+                            });
+                            $('#otpStatus').html('<div class="alert alert-danger mb-0"><i class="bi bi-x-circle"></i> ' + (response.message || 'Invalid OTP') + '</div>');
+                            $('#otpCode').val('').focus();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('OTP Verify Error:', { status, error, responseText: xhr.responseText });
+                        let errorMessage = 'An error occurred while verifying OTP';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: errorMessage
+                        });
+                    },
+                    complete: function() {
+                        $('#verifyOTPBtn').prop('disabled', false).html('<i class="bi bi-check-circle"></i> Verify');
+                    }
+                });
+            });
+
+            // Allow Enter key to verify OTP
+            $('#otpCode').on('keypress', function(e) {
+                if (e.which === 13) {
+                    $('#verifyOTPBtn').click();
+                }
+            });
+
+            // Update payment button state
+            function updatePaymentButtonState() {
+                const cardNumber = $('#cardNumber').val().replace(/\s/g, '');
+                const canPay = otpVerified && cardNumber.length >= 13 && verifiedEmail === $('#paymentEmail').val().trim();
+                $('#processPaymentBtn').prop('disabled', !canPay);
+            }
+
+            // Reset OTP state when modal is closed
+            $('#paymentModal').on('hidden.bs.modal', function() {
+                otpVerified = false;
+                verifiedEmail = '';
+                $('#paymentEmail, #otpCode').val('');
+                $('#otpSection').hide();
+                $('#otpStatus').html('');
+                $('#otpCode, #verifyOTPBtn').prop('disabled', false);
+                $('#processPaymentBtn').prop('disabled', true);
+            });
 
             // Format card number input
             $('#cardNumber').on('input', function() {
                 let value = $(this).val().replace(/\s/g, '');
                 let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
                 $(this).val(formattedValue);
+                updatePaymentButtonState();
+            });
+
+            // Update payment button when email changes
+            $('#paymentEmail').on('input', function() {
+                if (verifiedEmail !== $(this).val().trim()) {
+                    otpVerified = false;
+                    verifiedEmail = '';
+                    $('#otpStatus').html('');
+                    $('#otpCode, #verifyOTPBtn').prop('disabled', false);
+                }
+                updatePaymentButtonState();
             });
 
             // Process payment
             $('#processPaymentBtn').click(function() {
+                // Validate OTP
+                if (!otpVerified) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'OTP Required',
+                        text: 'Please verify your email with OTP before proceeding to payment.'
+                    });
+                    return;
+                }
+
+                // Validate required fields
+                const city = $('#city').val();
+                const documentSubmissionMethod = $('#documentSubmissionMethod').val();
+                
+                if (!city) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Please select a city'
+                    });
+                    return;
+                }
+                
+                if (!documentSubmissionMethod) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Validation Error',
+                        text: 'Document submission method is required'
+                    });
+                    return;
+                }
+                
                 const cardNumber = $('#cardNumber').val().replace(/\s/g, '');
                 if (!cardNumber || cardNumber.length < 13) {
                     Swal.fire({
@@ -381,7 +810,9 @@
                     method: 'POST',
                     data: {
                         applicationId: @Model.Id,
-                        cardNumber: lastFour
+                        cardNumber: lastFour,
+                        city: city,
+                        documentSubmissionMethod: documentSubmissionMethod
                     },
                     headers: {
                         'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()

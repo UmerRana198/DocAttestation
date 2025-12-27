@@ -20,6 +20,8 @@ public class ProfileController : Controller
     private readonly IPdfStampingService _pdfStampingService;
     private readonly IApplicationService _applicationService;
     private readonly IWorkflowService _workflowService;
+    private readonly IEmailService _emailService;
+    private readonly IOTPService _otpService;
     private readonly ILogger<ProfileController> _logger;
     private readonly IWebHostEnvironment _environment;
 
@@ -30,6 +32,8 @@ public class ProfileController : Controller
         IPdfStampingService pdfStampingService,
         IApplicationService applicationService,
         IWorkflowService workflowService,
+        IEmailService emailService,
+        IOTPService otpService,
         ILogger<ProfileController> logger,
         IWebHostEnvironment environment)
     {
@@ -39,6 +43,8 @@ public class ProfileController : Controller
         _pdfStampingService = pdfStampingService;
         _applicationService = applicationService;
         _workflowService = workflowService;
+        _emailService = emailService;
+        _otpService = otpService;
         _logger = logger;
         _environment = environment;
     }
@@ -209,6 +215,12 @@ public class ProfileController : Controller
             if (application != null && application.ApplicantProfileId == profile.Id && application.Status == ApplicationStatus.Draft)
             {
                 model.VerificationType = application.VerificationType;
+                model.ApplicationNumber = application.ApplicationNumber;
+                model.City = application.City;
+                model.DocumentSubmissionMethod = application.DocumentSubmissionMethod;
+                model.SubmissionBy = application.SubmissionBy;
+                model.RelationType = application.RelationType;
+                model.RelationCNIC = application.RelationCNIC;
                 
                 // Load existing documents
                 if (application.Documents != null && application.Documents.Any())
@@ -415,6 +427,11 @@ public class ProfileController : Controller
                 // Update application
                 var oldFee = application.Fee;
                 application.VerificationType = model.VerificationType;
+                application.City = model.City;
+                application.DocumentSubmissionMethod = model.DocumentSubmissionMethod;
+                application.SubmissionBy = model.SubmissionBy;
+                application.RelationType = model.RelationType;
+                application.RelationCNIC = model.RelationCNIC;
                 
                 // Recalculate fee
                 decimal baseFeePerDocument = model.VerificationType == VerificationType.Normal ? 500m : 1500m;
@@ -476,6 +493,14 @@ public class ProfileController : Controller
                 };
 
                 application = await _applicationService.CreateApplicationAsync(profile.Id, applicationDto);
+                
+                // Update application with City, DocumentSubmissionMethod, SubmissionBy, RelationType, and RelationCNIC
+                application.City = model.City;
+                application.DocumentSubmissionMethod = model.DocumentSubmissionMethod;
+                application.SubmissionBy = model.SubmissionBy;
+                application.RelationType = model.RelationType;
+                application.RelationCNIC = model.RelationCNIC;
+                await _context.SaveChangesAsync();
             }
 
             profile.CurrentStep = 4; // Step 3 is now the last step before review
@@ -705,7 +730,9 @@ public class ProfileController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ProcessPayment(int applicationId, string cardNumber)
+    public async Task<IActionResult> ProcessPayment(int applicationId, string cardNumber, 
+        string? city = null, string? documentSubmissionMethod = null, 
+        string? submissionBy = null, string? relationType = null, string? relationCNIC = null)
     {
         try
         {
@@ -718,6 +745,40 @@ public class ProfileController : Controller
             
             if (application.ApplicantProfileId != profile.Id)
                 return Json(new { success = false, message = "Unauthorized" });
+
+            // Save city and document submission details
+            if (!string.IsNullOrEmpty(city))
+            {
+                application.City = city;
+            }
+            
+            if (!string.IsNullOrEmpty(documentSubmissionMethod) && int.TryParse(documentSubmissionMethod, out int methodValue))
+            {
+                application.DocumentSubmissionMethod = (DocumentSubmissionMethod)methodValue;
+                
+                // If TCS is selected, generate TCS number after payment
+                if (application.DocumentSubmissionMethod == DocumentSubmissionMethod.TCS)
+                {
+                    // Generate unique TCS number: TCS + ApplicationNumber + timestamp
+                    var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                    application.TCSNumber = $"TCS{application.ApplicationNumber.Replace("-", "")}{timestamp.Substring(timestamp.Length - 6)}";
+                }
+            }
+            
+            if (!string.IsNullOrEmpty(submissionBy) && int.TryParse(submissionBy, out int submissionValue))
+            {
+                application.SubmissionBy = (SubmissionBy)submissionValue;
+            }
+            
+            if (!string.IsNullOrEmpty(relationType))
+            {
+                application.RelationType = relationType;
+            }
+            
+            if (!string.IsNullOrEmpty(relationCNIC))
+            {
+                application.RelationCNIC = relationCNIC;
+            }
 
             // Create payment record
             var payment = new Payment
@@ -746,15 +807,211 @@ public class ProfileController : Controller
             if (!assigned)
             {
                 _logger.LogWarning("Failed to auto-assign application {ApplicationId} after payment", applicationId);
-                return Json(new { success = true, message = "Payment processed and application submitted successfully. Assignment will be done manually." });
             }
 
-            return Json(new { success = true, message = "Payment processed successfully. Application has been submitted and assigned." });
+            // Reload application with User navigation property for email
+            var applicationForEmail = await _context.Applications
+                .Include(a => a.ApplicantProfile)
+                    .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(a => a.Id == applicationId);
+
+            // Reload payment to get the saved payment with ID
+            var savedPayment = await _context.Payments
+                .OrderByDescending(p => p.PaidAt)
+                .FirstOrDefaultAsync(p => p.ApplicationId == applicationId);
+
+            // Send confirmation email
+            if (applicationForEmail != null && savedPayment != null)
+            {
+                _logger.LogInformation("Preparing to send email for application {ApplicationId}. Application: {AppNumber}, Payment: {PaymentId}", 
+                    applicationId, applicationForEmail.ApplicationNumber, savedPayment.Id);
+                
+                try
+                {
+                    var emailSent = await _emailService.SendPaymentConfirmationEmailAsync(applicationForEmail, savedPayment);
+                    if (emailSent)
+                    {
+                        _logger.LogInformation("Payment confirmation email sent successfully for application {ApplicationId}", applicationId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Payment confirmation email failed to send for application {ApplicationId}", applicationId);
+                    }
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Exception occurred while sending payment confirmation email for application {ApplicationId}: {Message}", 
+                        applicationId, emailEx.Message);
+                    // Don't fail the payment if email fails
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Cannot send email - Application: {AppNull}, Payment: {PaymentNull}", 
+                    applicationForEmail == null ? "null" : "found", savedPayment == null ? "null" : "found");
+            }
+
+            return Json(new { success = true, message = "Payment processed successfully. Application has been submitted and assigned. A confirmation email has been sent to your registered email address." });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing payment");
             return Json(new { success = false, message = "An error occurred processing payment" });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SendOTP(string email)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+            {
+                return Json(new { success = false, message = "Please enter a valid email address" });
+            }
+
+            _logger.LogInformation("SendOTP request received for email: {Email}", email);
+            
+            await _otpService.GenerateAndSendOTPAsync(email);
+            
+            _logger.LogInformation("OTP sent successfully to {Email}", email);
+            return Json(new { success = true, message = "OTP has been sent to your email address. Please check your inbox (and spam folder)." });
+        }
+        catch (ArgumentException argEx)
+        {
+            _logger.LogWarning(argEx, "Invalid argument when sending OTP to {Email}: {Message}", email, argEx.Message);
+            return Json(new { success = false, message = argEx.Message });
+        }
+        catch (InvalidOperationException opEx)
+        {
+            _logger.LogError(opEx, "Operation failed when sending OTP to {Email}: {Message}", email, opEx.Message);
+            
+            // Parse specific error types from EmailService
+            var errorMessage = opEx.Message;
+            string userMessage;
+            
+            if (errorMessage.StartsWith("EMAIL_AUTH_ERROR:"))
+            {
+                userMessage = "Gmail authentication failed. The email account credentials may be incorrect or the app password may have expired. Please contact support to update email settings.";
+            }
+            else if (errorMessage.StartsWith("EMAIL_CONNECTION_ERROR:"))
+            {
+                userMessage = "Cannot connect to Gmail SMTP server. This may be due to network issues or firewall blocking. Please check your internet connection or contact support.";
+            }
+            else if (errorMessage.StartsWith("EMAIL_QUOTA_ERROR:"))
+            {
+                userMessage = "Gmail sending limit exceeded. Please try again in a few minutes or contact support.";
+            }
+            else if (errorMessage.StartsWith("EMAIL_SMTP_ERROR:") || errorMessage.StartsWith("EMAIL_ERROR:"))
+            {
+                // Extract the actual error message after the prefix
+                var actualError = errorMessage.Contains(":") ? errorMessage.Substring(errorMessage.IndexOf(":") + 1).Trim() : errorMessage;
+                userMessage = $"Email service error: {actualError}. Please contact support if the issue persists.";
+            }
+            else if (errorMessage.Contains("not configured"))
+            {
+                userMessage = "Email service is not properly configured. Please contact support.";
+            }
+            else
+            {
+                userMessage = "Email service is temporarily unavailable. Please try again later or contact support.";
+            }
+            
+            return Json(new { success = false, message = userMessage });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error sending OTP to {Email}: {Message}", email, ex.Message);
+            
+            // In development, provide more details
+            var errorMessage = "Failed to send OTP. Please try again.";
+            if (HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+            {
+                errorMessage = $"Failed to send OTP: {ex.Message}";
+            }
+            
+            return Json(new { success = false, message = errorMessage });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult VerifyOTP(string email, string otp)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(otp))
+            {
+                return Json(new { success = false, message = "Email and OTP are required" });
+            }
+
+            if (otp.Length != 6 || !otp.All(char.IsDigit))
+            {
+                return Json(new { success = false, message = "OTP must be a 6-digit number" });
+            }
+
+            var isValid = _otpService.VerifyOTP(email, otp);
+            if (isValid)
+            {
+                return Json(new { success = true, message = "OTP verified successfully" });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Invalid OTP. Please try again." });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error verifying OTP for {Email}", email);
+            return Json(new { success = false, message = "An error occurred while verifying OTP" });
+        }
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TestEmail(string email)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+            {
+                return Json(new { success = false, message = "Please enter a valid email address" });
+            }
+
+            _logger.LogInformation("Testing email service - Sending test email to {Email}", email);
+            
+            var testSubject = "Test Email - Document Attestation System";
+            var testBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <title>Test Email</title>
+</head>
+<body style=""font-family: Arial, sans-serif; padding: 20px;"">
+    <h2 style=""color: #006633;"">Test Email</h2>
+    <p>This is a test email from the Document Attestation System.</p>
+    <p>If you received this email, the email service is working correctly.</p>
+    <p>Time: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+</body>
+</html>";
+
+            var result = await _emailService.SendEmailAsync(email, testSubject, testBody, true);
+            
+            if (result)
+            {
+                return Json(new { success = true, message = "Test email sent successfully! Please check your inbox (and spam folder)." });
+            }
+            else
+            {
+                return Json(new { success = false, message = "Failed to send test email. Check server logs for details." });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending test email to {Email}: {Message}", email, ex.Message);
+            return Json(new { success = false, message = $"Error: {ex.Message}. Check server logs for more details." });
         }
     }
 }

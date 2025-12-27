@@ -32,5 +32,10 @@ public class MobileAppSettings
     /// Enable/disable web-based QR verification (should be false for security)
     /// </summary>
     public bool AllowWebVerification { get; set; } = false;
+    
+    /// <summary>
+    /// Base API URL for mobile app to connect to
+    /// </summary>
+    public string BaseApiUrl { get; set; } = "http://103.175.122.31:81";
 }
 

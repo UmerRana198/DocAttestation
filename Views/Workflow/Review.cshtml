@@ -115,6 +115,87 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- City and Document Submission Information -->
+                        @if (!string.IsNullOrEmpty(Model.City) || Model.DocumentSubmissionMethod.HasValue || Model.SubmissionBy.HasValue)
+                        {
+                            <hr class="my-3" />
+                            <h6 class="mb-3"><i class="bi bi-geo-alt"></i> Submission Information</h6>
+                            <div class="row">
+                                @if (!string.IsNullOrEmpty(Model.City))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>City:</strong></label>
+                                            <p class="form-control-plaintext">@Model.City</p>
+                                        </div>
+                                    </div>
+                                }
+                                @if (Model.DocumentSubmissionMethod.HasValue)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>Document Submission Method:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                @(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical ? "Physical" : "TCS (Courier Service)")
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            
+                            <!-- Submitted By Information -->
+                            @if (Model.SubmissionBy.HasValue)
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>Submitted By:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                @(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself ? "By Yourself" : "Blood Relation")
+                                            </p>
+                                        </div>
+                                    </div>
+                                    @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label"><strong>Relation Type:</strong></label>
+                                                <p class="form-control-plaintext">@(Model.RelationType ?? "N/A")</p>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation && !string.IsNullOrEmpty(Model.RelationCNIC))
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label"><strong>Relation CNIC Number:</strong></label>
+                                                <p class="form-control-plaintext">@Model.RelationCNIC</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            
+                            @if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS && !string.IsNullOrEmpty(Model.TCSNumber))
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>TCS Tracking Number:</strong></label>
+                                            <div class="alert alert-success mb-0 py-2">
+                                                <i class="bi bi-truck"></i> 
+                                                <strong>@Model.TCSNumber</strong>
+                                            </div>
+                                            <small class="text-muted">Use this number to track your document shipment via TCS</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
                     </div>
                 </div>
             </div>
@@ -131,10 +212,10 @@
                             @foreach (var doc in Model.Documents)
                             {
                                 <div class="card mb-3">
-                                    <div class="card-header bg-light">
+                                    <div class="card-header bg-primary">
                                         <div class="d-flex justify-content-between align-items-center">
-                                            <h6 class="mb-0">
-                                                <i class="bi bi-file-pdf text-primary"></i> @doc.DocumentName
+                                            <h6 class="mb-0 text-white">
+                                                <i class="bi bi-file-pdf text-white"></i> @doc.DocumentName
                                             </h6>
                                             <div class="d-flex gap-2 align-items-center">
                                                 @{
@@ -162,7 +243,7 @@
                                         <div class="row">
                                             <div class="col-md-6">
                                                 <div class="form-group mb-3">
-                                                    <label class="form-label fw-bold" Style="color: white;">Document Name</label>
+                                                    <label class="form-label fw-bold">Document Name</label>
                                                     <p class="mb-0">@doc.DocumentName</p>
                                                 </div>
                                             </div>
@@ -266,13 +347,12 @@
                         </div>
                         <div class="card-body">
                             <div class="mb-3">
-                                <label for="remarks" class="form-label">Remarks (Optional for approval, Required for reject/send back)</label>
+                                <label for="remarks" class="form-label">Remarks (Optional for approval, Required for reject)</label>
                                 <textarea id="remarks" class="form-control" rows="3"></textarea>
                             </div>
 
                             <div class="btn-group" role="group">
                                 <button type="button" class="btn btn-success" id="approveBtn">Approve</button>
-                                <button type="button" class="btn btn-warning" id="sendBackBtn">Send Back</button>
                                 <button type="button" class="btn btn-danger" id="rejectBtn">Reject</button>
                             </div>
                         </div>
@@ -360,16 +440,13 @@
                 <div class="mb-3">
                     <label for="documentRemarks" class="form-label">Comments / Remarks <span class="text-danger">*</span></label>
                     <textarea id="documentRemarks" class="form-control" rows="4" placeholder="Enter your comments or remarks about this document..." required></textarea>
-                    <small class="text-muted">Remarks are required for Reject and Send Back actions</small>
+                    <small class="text-muted">Remarks are required for Reject action</small>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-success" id="approveDocumentBtn">
                     <i class="bi bi-check-circle"></i> Approve
-                </button>
-                <button type="button" class="btn btn-warning" id="sendBackDocumentBtn">
-                    <i class="bi bi-arrow-left-circle"></i> Send Back
                 </button>
                 <button type="button" class="btn btn-danger" id="rejectDocumentBtn">
                     <i class="bi bi-x-circle"></i> Reject
@@ -398,21 +475,6 @@
                 const remarks = $('#documentRemarks').val();
                 if (!currentDocumentId) return;
                 submitDocumentAction('approve', currentDocumentId, remarks);
-            });
-            
-            // Document Send Back
-            $('#sendBackDocumentBtn').click(function() {
-                const remarks = $('#documentRemarks').val();
-                if (!currentDocumentId) return;
-                if (!remarks || remarks.trim() === '') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Remarks Required',
-                        text: 'Please provide remarks when sending back a document'
-                    });
-                    return;
-                }
-                submitDocumentAction('sendback', currentDocumentId, remarks);
             });
             
             // Document Reject
@@ -487,19 +549,6 @@
                 submitAction('approve', remarks);
             });
 
-            $('#sendBackBtn').click(function() {
-                const remarks = $('#remarks').val();
-                if (!remarks || remarks.trim() === '') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Remarks Required',
-                        text: 'Please provide remarks when sending back an application'
-                    });
-                    return;
-                }
-                submitAction('sendback', remarks);
-            });
-
             $('#rejectBtn').click(function() {
                 const remarks = $('#remarks').val();
                 if (!remarks || remarks.trim() === '') {
@@ -549,8 +598,19 @@
                                         title: 'Success',
                                         text: response.message
                                     }).then(() => {
-                                        // Reload the page to show approved status and print QR code option
-                                        window.location.reload();
+                                        // AttestationOfficer stays on page to print QR code, others redirect to pending list
+                                        @if (isAttestationOfficer)
+                                        {
+                                            <text>
+                                            window.location.reload();
+                                            </text>
+                                        }
+                                        else
+                                        {
+                                            <text>
+                                            window.location.href = '@Url.Action("Index", "Workflow")';
+                                            </text>
+                                        }
                                     });
                                 } else {
                                     Swal.fire({

@@ -35,8 +35,12 @@ public class RegisterViewModel
     [Required(ErrorMessage = "Please enter the captcha code")]
     [StringLength(5, MinimumLength = 5, ErrorMessage = "Please enter all 5 characters")]
     [Display(Name = "Captcha Code")]
-    public string CaptchaAnswer { get; set; } = null!;
+    public string CaptchaAnswer { get; set; } = string.Empty;
 
-    public string CaptchaChallengeId { get; set; } = null!;
-    public string CaptchaImageUrl { get; set; } = null!;
+    // These are not user input - exclude from validation
+    [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever]
+    public string CaptchaChallengeId { get; set; } = string.Empty;
+    
+    [Microsoft.AspNetCore.Mvc.ModelBinding.Validation.ValidateNever]
+    public string? CaptchaImageUrl { get; set; }
 }

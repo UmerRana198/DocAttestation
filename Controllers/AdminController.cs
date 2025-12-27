@@ -16,17 +16,20 @@ public class AdminController : Controller
     private readonly ApplicationDbContext _context;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IWorkflowService _workflowService;
+    private readonly IEmailService _emailService;
     private readonly ILogger<AdminController> _logger;
 
     public AdminController(
         ApplicationDbContext context,
         UserManager<ApplicationUser> userManager,
         IWorkflowService workflowService,
+        IEmailService emailService,
         ILogger<AdminController> logger)
     {
         _context = context;
         _userManager = userManager;
         _workflowService = workflowService;
+        _emailService = emailService;
         _logger = logger;
     }
 
@@ -288,6 +291,57 @@ public class AdminController : Controller
         }
         
         return RedirectToAction(nameof(Applications));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> TestEmail(string email)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(email) || !email.Contains("@"))
+            {
+                TempData["Error"] = "Please enter a valid email address";
+                return RedirectToAction("Index");
+            }
+
+            _logger.LogInformation("Admin testing email service - Sending test email to {Email}", email);
+            
+            var testSubject = "Test Email - Document Attestation System";
+            var testBody = $@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=""utf-8"">
+    <title>Test Email</title>
+</head>
+<body style=""font-family: Arial, sans-serif; padding: 20px;"">
+    <h2 style=""color: #006633;"">Test Email</h2>
+    <p>This is a test email from the Document Attestation System.</p>
+    <p>If you received this email, the email service is working correctly.</p>
+    <p><strong>Time:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC</p>
+    <p><strong>Server:</strong> {Request.Host}</p>
+</body>
+</html>";
+
+            var result = await _emailService.SendEmailAsync(email, testSubject, testBody, true);
+            
+            if (result)
+            {
+                TempData["Success"] = $"Test email sent successfully to {email}! Please check your inbox (and spam folder).";
+            }
+            else
+            {
+                TempData["Error"] = $"Failed to send test email to {email}. Check server logs for details.";
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sending test email to {Email}: {Message}", email, ex.Message);
+            TempData["Error"] = $"Error: {ex.Message}. Check server logs for more details.";
+        }
+        
+        return RedirectToAction("Index");
     }
 }
 

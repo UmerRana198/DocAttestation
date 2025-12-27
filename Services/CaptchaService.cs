@@ -41,7 +41,9 @@ public class CaptchaService : ICaptchaService
             CreatedAt = DateTime.UtcNow
         };
 
-        _logger.LogInformation("Generated captcha {Id}: {Code}", challengeId, code);
+        // Direct console output for debugging
+        Console.WriteLine($"[CAPTCHA] Generated: ID={challengeId}, Code={code}, Total stored={_challenges.Count}");
+        _logger.LogWarning("[CAPTCHA] Generated: ID={Id}, Code={Code}, Total={Count}", challengeId, code, _challenges.Count);
         
         return challenge;
     }
@@ -203,30 +205,41 @@ public class CaptchaService : ICaptchaService
 
     public bool ValidateChallenge(string answer, string challengeId)
     {
+        // Direct console output for debugging
+        Console.WriteLine($"[CAPTCHA] === VALIDATION START ===");
+        Console.WriteLine($"[CAPTCHA] ChallengeId: '{challengeId ?? "(null)"}'");
+        Console.WriteLine($"[CAPTCHA] Answer: '{answer ?? "(null)"}'");
+        Console.WriteLine($"[CAPTCHA] Total stored: {_challenges.Count}");
+        Console.WriteLine($"[CAPTCHA] Stored IDs: {string.Join(", ", _challenges.Keys.Take(5))}{(_challenges.Count > 5 ? "..." : "")}");
+        
         if (string.IsNullOrEmpty(answer) || string.IsNullOrEmpty(challengeId))
         {
-            _logger.LogWarning("Empty answer or challenge ID");
+            Console.WriteLine("[CAPTCHA] FAIL: Empty answer or challenge ID");
             return false;
         }
 
         if (!_challenges.TryRemove(challengeId, out var challenge))
         {
-            _logger.LogWarning("Challenge not found: {Id}", challengeId);
+            Console.WriteLine($"[CAPTCHA] FAIL: Challenge NOT FOUND! ID={challengeId}");
+            Console.WriteLine($"[CAPTCHA] Available IDs: {string.Join(", ", _challenges.Keys)}");
             return false;
         }
 
-        // Check expiry (2 minutes)
-        if ((DateTime.UtcNow - challenge.CreatedAt).TotalMinutes > 2)
+        // Check expiry (5 minutes)
+        var age = (DateTime.UtcNow - challenge.CreatedAt).TotalMinutes;
+        if (age > 5)
         {
-            _logger.LogWarning("Challenge expired: {Id}", challengeId);
+            Console.WriteLine($"[CAPTCHA] FAIL: Challenge expired. Age={age:F1} minutes");
             return false;
         }
 
         // Case-insensitive comparison
-        var isValid = string.Equals(answer.Trim(), challenge.Question, StringComparison.OrdinalIgnoreCase);
+        var normalizedAnswer = answer.Trim().ToUpperInvariant();
+        var normalizedExpected = challenge.Question.Trim().ToUpperInvariant();
+        var isValid = string.Equals(normalizedAnswer, normalizedExpected, StringComparison.Ordinal);
         
-        _logger.LogInformation("Validate captcha {Id}: expected={E}, got={G}, valid={V}", 
-            challengeId, challenge.Question, answer, isValid);
+        Console.WriteLine($"[CAPTCHA] Expected: '{normalizedExpected}', Got: '{normalizedAnswer}', Match: {isValid}");
+        Console.WriteLine($"[CAPTCHA] === VALIDATION END: {(isValid ? "SUCCESS" : "FAIL")} ===");
 
         return isValid;
     }

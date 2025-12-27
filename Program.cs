@@ -25,6 +25,18 @@ builder.Host.UseSerilog();
 // Add services to the container
 builder.Services.AddControllersWithViews();
 
+// CORS Configuration for Mobile App
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MobileAppPolicy", policy =>
+    {
+        policy.AllowAnyOrigin()  // In production, replace with specific origins
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .WithExposedHeaders("X-App-Version", "X-Platform");
+    });
+});
+
 // Database Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -123,6 +135,9 @@ builder.Services.AddScoped<IVerificationService, VerificationService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
 builder.Services.AddSingleton<ICaptchaService, CaptchaService>();
 builder.Services.AddScoped<IMobileAppService, MobileAppService>();
+builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<IOTPService, OTPService>();
+builder.Services.AddMemoryCache();
 
 // Configuration Options
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
@@ -130,6 +145,8 @@ builder.Services.Configure<EncryptionSettings>(builder.Configuration.GetSection(
 builder.Services.Configure<QRCodeSettings>(builder.Configuration.GetSection("QRCodeSettings"));
 builder.Services.Configure<FileUploadSettings>(builder.Configuration.GetSection("FileUploadSettings"));
 builder.Services.Configure<MobileAppSettings>(builder.Configuration.GetSection("MobileAppSettings"));
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.Configure<AdminSettings>(builder.Configuration.GetSection("AdminSettings"));
 
 // HTTP Context Accessor
 builder.Services.AddHttpContextAccessor();
@@ -150,6 +167,9 @@ else
 // Global Exception Handling Middleware
 app.UseMiddleware<GlobalExceptionMiddleware>();
 
+// CORS must be before UseRouting
+app.UseCors("MobileAppPolicy");
+
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
@@ -158,6 +178,10 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+// Map API controllers
+app.MapControllers();
+
+// Map MVC controllers
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

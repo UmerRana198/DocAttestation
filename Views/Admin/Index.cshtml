@@ -17,6 +17,30 @@
             </a>
         </div>
 
+        <!-- Test Email Section -->
+        <div class="card mb-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="bi bi-envelope"></i> Test Email Service</h5>
+            </div>
+            <div class="card-body">
+                <form asp-action="TestEmail" method="post">
+                    @Html.AntiForgeryToken()
+                    <div class="row">
+                        <div class="col-md-8">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" placeholder="Enter email address to test" required />
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-info w-100">
+                                <i class="bi bi-send"></i> Send Test Email
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted">This will send a test email to verify the email service is working correctly.</small>
+                </form>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header">
                 <h5>System Users</h5>

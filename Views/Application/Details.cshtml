@@ -23,18 +23,25 @@
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         }
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="mb-0">Application Details</h2>
-            <div class="d-flex gap-2">
-                @if (Model.Status == DocAttestation.Models.ApplicationStatus.Draft)
-                {
-                    <a asp-controller="Profile" asp-action="EditApplication" asp-route-applicationId="@Model.Id" class="btn btn-warning">
-                        <i class="bi bi-pencil"></i> Edit Application
-                    </a>
-                }
-                <a asp-action="Index" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Back to Applications
-                </a>
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-header bg-primary">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-0 text-white">Application Details</h4>
+                        <small class="text-white">Submitted Date: @Model.SubmittedAt.ToString("dd MMM yyyy")</small>
+                    </div>
+                    <div class="d-flex gap-2">
+                        @if (Model.Status == DocAttestation.Models.ApplicationStatus.Draft)
+                        {
+                            <a asp-controller="Profile" asp-action="EditApplication" asp-route-applicationId="@Model.Id" class="btn btn-warning btn-sm">
+                                <i class="bi bi-pencil"></i> Edit Application
+                            </a>
+                        }
+                        <a asp-action="Index" class="btn btn-light btn-sm">
+                            <i class="bi bi-arrow-left"></i> Back to Applications
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -47,65 +54,17 @@
                         <h5 class="mb-0 text-white"><i class="bi bi-info-circle"></i> Application Information</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label class="form-label">Application Number</label>
-                                    <input type="text" class="form-control" value="@Model.ApplicationNumber" readonly />
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label class="form-label">Status</label>
-                                    <div>
-                                        @switch (Model.Status)
-                                        {
-                                            case DocAttestation.Models.ApplicationStatus.Draft:
-                                                <span class="badge bg-secondary">Draft</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.Submitted:
-                                                <span class="badge bg-primary">Submitted</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.UnderVerification:
-                                                <span class="badge bg-info">Under Verification</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.UnderSupervision:
-                                                <span class="badge bg-warning">Under Supervision</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.UnderAttestation:
-                                                <span class="badge bg-secondary">Under Attestation</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.Approved:
-                                                <span class="badge bg-success">Approved</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.Rejected:
-                                                <span class="badge bg-danger">Rejected</span>
-                                                break;
-                                            case DocAttestation.Models.ApplicationStatus.SentBack:
-                                                <span class="badge bg-warning">Sent Back</span>
-                                                break;
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group mb-3">
-                                    <label class="form-label">Submitted Date</label>
-                                    <input type="text" class="form-control" value="@Model.SubmittedAt.ToString("dd MMM yyyy HH:mm")" readonly />
-                                </div>
-                            </div>
-                            @if (Model.AttestedAt.HasValue)
-                            {
+                        @if (Model.AttestedAt.HasValue)
+                        {
+                            <div class="row">
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
                                         <label class="form-label">Attested Date</label>
                                         <input type="text" class="form-control" value="@Model.AttestedAt.Value.ToString("dd MMM yyyy HH:mm")" readonly />
                                     </div>
                                 </div>
-                            }
-                        </div>
+                            </div>
+                        }
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">
@@ -124,6 +83,87 @@
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- City and Document Submission Information -->
+                        @if (!string.IsNullOrEmpty(Model.City) || Model.DocumentSubmissionMethod.HasValue)
+                        {
+                            <hr class="my-3" />
+                            <h6 class="mb-3"><i class="bi bi-geo-alt"></i> Submission Information</h6>
+                            <div class="row">
+                                @if (!string.IsNullOrEmpty(Model.City))
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>City:</strong></label>
+                                            <p class="form-control-plaintext">@Model.City</p>
+                                        </div>
+                                    </div>
+                                }
+                                @if (Model.DocumentSubmissionMethod.HasValue)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>Document Submission Method:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                @(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical ? "Physical" : "TCS (Courier Service)")
+                                            </p>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                            
+                            @if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical && Model.SubmissionBy.HasValue)
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>Submission By:</strong></label>
+                                            <p class="form-control-plaintext">
+                                                @(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself ? "By Yourself" : "Blood Relation")
+                                            </p>
+                                        </div>
+                                    </div>
+                                    @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
+                                    {
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label"><strong>Relation Type:</strong></label>
+                                                <p class="form-control-plaintext">@(Model.RelationType ?? "N/A")</p>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                                
+                                @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation && !string.IsNullOrEmpty(Model.RelationCNIC))
+                                {
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label"><strong>Relation CNIC Number:</strong></label>
+                                                <p class="form-control-plaintext">@Model.RelationCNIC</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            
+                            @if (Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS && !string.IsNullOrEmpty(Model.TCSNumber))
+                            {
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label"><strong>TCS Tracking Number:</strong></label>
+                                            <div class="alert alert-success mb-0 py-2">
+                                                <i class="bi bi-truck"></i> 
+                                                <strong>@Model.TCSNumber</strong>
+                                            </div>
+                                            <small class="text-muted">Use this number to track your document shipment via TCS</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group mb-3">

@@ -34,6 +34,14 @@ public class Application
     public decimal Fee { get; set; } = 0;
     public DateTime? TimeSlot { get; set; } // Assigned time slot for verification
     
+    // City and Document Submission
+    public string? City { get; set; }
+    public DocumentSubmissionMethod? DocumentSubmissionMethod { get; set; }
+    public SubmissionBy? SubmissionBy { get; set; }
+    public string? RelationType { get; set; } // Father, Mother, Sister, Brother, etc.
+    public string? RelationCNIC { get; set; }
+    public string? TCSNumber { get; set; } // Generated after payment if TCS is selected
+    
     // Navigation
     public virtual ApplicantProfile ApplicantProfile { get; set; } = null!;
     public virtual ICollection<WorkflowStep> WorkflowSteps { get; set; } = new List<WorkflowStep>();
@@ -62,5 +70,17 @@ public enum VerificationType
 {
     Normal = 0,
     Urgent = 1
+}
+
+public enum DocumentSubmissionMethod
+{
+    Physical = 0,
+    TCS = 1
+}
+
+public enum SubmissionBy
+{
+    ByYourself = 0,
+    BloodRelation = 1
 }
 

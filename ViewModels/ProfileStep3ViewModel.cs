@@ -10,6 +10,26 @@ public class ProfileStep3ViewModel
     
     public List<DocumentItem> Documents { get; set; } = new List<DocumentItem>();
     
+    // Application information
+    public string? ApplicationNumber { get; set; }
+    
+    [Required(ErrorMessage = "City is required")]
+    [Display(Name = "City")]
+    public string? City { get; set; }
+    
+    [Required(ErrorMessage = "Document Submission Method is required")]
+    [Display(Name = "Original Document Submission")]
+    public DocAttestation.Models.DocumentSubmissionMethod? DocumentSubmissionMethod { get; set; }
+    
+    [Display(Name = "Submission By")]
+    public DocAttestation.Models.SubmissionBy? SubmissionBy { get; set; }
+    
+    [Display(Name = "Blood Relation")]
+    public string? RelationType { get; set; }
+    
+    [Display(Name = "Relation CNIC Number")]
+    public string? RelationCNIC { get; set; }
+    
     // Available document names for dropdown
     public static List<string> GetDocumentNames()
     {

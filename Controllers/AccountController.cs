@@ -238,23 +238,35 @@ public class AccountController : Controller
         void RegenerateCaptcha()
         {
             var challenge = _captchaService.GenerateChallenge();
+            // Must clear ModelState so the new values are used instead of posted values
+            ModelState.Remove("CaptchaChallengeId");
+            ModelState.Remove("CaptchaAnswer");
             model.CaptchaChallengeId = challenge.ChallengeId;
             model.CaptchaImageUrl = challenge.Question;
+            model.CaptchaAnswer = string.Empty;
         }
 
         // Validate CAPTCHA
+        _logger.LogWarning("Login attempt - CaptchaAnswer: '{Answer}', CaptchaChallengeId: '{Id}'", 
+            model.CaptchaAnswer, model.CaptchaChallengeId);
+        
         if (!_captchaService.ValidateChallenge(model.CaptchaAnswer, model.CaptchaChallengeId))
         {
-            ModelState.AddModelError("", "Captcha verification failed. Please try again.");
+            ModelState.AddModelError("", $"Captcha verification failed. Debug: Answer='{model.CaptchaAnswer}', ID='{model.CaptchaChallengeId}'");
             RegenerateCaptcha();
             return View(model);
         }
 
         if (!ModelState.IsValid)
         {
+            var errors = ModelState.Where(x => x.Value?.Errors.Count > 0)
+                .Select(x => $"{x.Key}: {string.Join(", ", x.Value!.Errors.Select(e => e.ErrorMessage))}");
+            Console.WriteLine($"[LOGIN] ModelState INVALID! Errors: {string.Join(" | ", errors)}");
             RegenerateCaptcha();
             return View(model);
         }
+
+        Console.WriteLine($"[LOGIN] Captcha passed! Attempting login for: {model.Login}");
 
         try
         {
@@ -263,6 +275,7 @@ public class AccountController : Controller
 
             // First try by email
             user = await _userManager.FindByEmailAsync(model.Login);
+            Console.WriteLine($"[LOGIN] FindByEmail result: {(user != null ? "FOUND" : "NOT FOUND")}");
 
             // If not found, try by CNIC (search in profiles)
             if (user == null)
@@ -275,21 +288,30 @@ public class AccountController : Controller
                 if (profile != null)
                 {
                     user = profile.User;
+                    Console.WriteLine("[LOGIN] Found user by CNIC");
+                }
+                else
+                {
+                    Console.WriteLine("[LOGIN] User NOT found by CNIC either");
                 }
             }
 
             if (user == null || !user.IsActive)
             {
+                Console.WriteLine($"[LOGIN] FAIL: User null={user == null}, IsActive={user?.IsActive}");
                 ModelState.AddModelError("", "Invalid login attempt.");
                 RegenerateCaptcha();
                 return View(model);
             }
 
+            Console.WriteLine($"[LOGIN] User found: {user.Email}, attempting password check...");
             var result = await _signInManager.PasswordSignInAsync(
                 user.UserName!,
                 model.Password,
                 model.RememberMe,
                 lockoutOnFailure: true);
+
+            Console.WriteLine($"[LOGIN] SignIn result: Succeeded={result.Succeeded}, LockedOut={result.IsLockedOut}, NotAllowed={result.IsNotAllowed}, RequiresTwoFactor={result.RequiresTwoFactor}");
 
             if (result.Succeeded)
             {
