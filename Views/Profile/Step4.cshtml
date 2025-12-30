@@ -81,6 +81,83 @@
                         </button>
                     </div>
 
+                    <!-- Document Submission Method Section -->
+                    <div class="card mt-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0"><i class="bi bi-file-earmark-arrow-up"></i> Document Submission Method</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-info mb-3">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Note:</strong> Divorce, Power of Authority (from/to), Legal Documents, Affidavit, and Commercial Documents require physical presence at the office. Other documents can be submitted via TCS (Courier Service).
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Original Document Submission <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="documentSubmissionMethod" name="DocumentSubmissionMethod" required>
+                                            <option value="">-- Select Submission Method --</option>
+                                            <option value="@((int)DocAttestation.Models.DocumentSubmissionMethod.Physical)" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical)">Physical</option>
+                                            <option value="@((int)DocAttestation.Models.DocumentSubmissionMethod.TCS)" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS)">TCS (Courier Service)</option>
+                                        </select>
+                                        <small class="form-text text-muted">Select how you want to submit your original documents</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6" id="submissionBySection" style="display: @(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical ? "block" : "none");">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Physical Submission By <span class="text-danger">*</span></label>
+                                        <select class="form-select" id="submissionBy" name="SubmissionBy" @(Model.DocumentSubmissionMethod != DocAttestation.Models.DocumentSubmissionMethod.Physical ? "disabled" : "")>
+                                            <option value="">-- Select Who Will Submit --</option>
+                                            <option value="@((int)DocAttestation.Models.SubmissionBy.ByYourself)" selected="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.ByYourself)">By Yourself</option>
+                                            <option value="@((int)DocAttestation.Models.SubmissionBy.BloodRelation)" selected="@(Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)">Blood Relation</option>
+                                        </select>
+                                        <small class="form-text text-muted">Who will bring the original documents to the office</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Blood Relation Details (shown if Physical + Blood Relation is selected) -->
+                            <div id="bloodRelationSection" style="display: @(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical && Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation ? "block" : "none");">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Relation Type <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="relationType" name="RelationType">
+                                                <option value="">-- Select Relation --</option>
+                                                <option value="Father" selected="@(Model.RelationType == "Father")">Father</option>
+                                                <option value="Mother" selected="@(Model.RelationType == "Mother")">Mother</option>
+                                                <option value="Brother" selected="@(Model.RelationType == "Brother")">Brother</option>
+                                                <option value="Sister" selected="@(Model.RelationType == "Sister")">Sister</option>
+                                                <option value="Son" selected="@(Model.RelationType == "Son")">Son</option>
+                                                <option value="Daughter" selected="@(Model.RelationType == "Daughter")">Daughter</option>
+                                                <option value="Husband" selected="@(Model.RelationType == "Husband")">Husband</option>
+                                                <option value="Wife" selected="@(Model.RelationType == "Wife")">Wife</option>
+                                                <option value="Uncle" selected="@(Model.RelationType == "Uncle")">Uncle</option>
+                                                <option value="Aunt" selected="@(Model.RelationType == "Aunt")">Aunt</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group mb-3">
+                                            <label class="form-label">Relation CNIC Number <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="relationCNIC" name="RelationCNIC" value="@Model.RelationCNIC" placeholder="12345-1234567-1" maxlength="15" />
+                                            <small class="form-text text-muted">Enter the CNIC number of the person who will submit documents</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="alert alert-warning mb-3">
+                                            <i class="bi bi-exclamation-triangle"></i>
+                                            <strong>Important:</strong> The blood relation person must bring their <strong>original CNIC</strong> when submitting documents on your behalf.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="form-group mt-4">
                         <a asp-action="Step3" class="btn btn-secondary">
                             <i class="bi bi-arrow-left"></i> Previous
@@ -192,6 +269,44 @@
                 }
             }
             
+            // Handle document submission method changes
+            $('#documentSubmissionMethod').on('change', function() {
+                var selectedMethod = $(this).val();
+                if (selectedMethod == '@((int)DocAttestation.Models.DocumentSubmissionMethod.Physical)') {
+                    $('#submissionBySection').slideDown(300);
+                    $('#submissionBy').prop('required', true).prop('disabled', false);
+                } else {
+                    $('#submissionBySection').slideUp(300);
+                    $('#submissionBy').prop('required', false).prop('disabled', true).val('');
+                    $('#bloodRelationSection').slideUp(300);
+                    $('#relationType, #relationCNIC').prop('required', false);
+                }
+            });
+
+            // Handle submission by changes
+            $('#submissionBy').on('change', function() {
+                var selectedSubmission = $(this).val();
+                if (selectedSubmission == '@((int)DocAttestation.Models.SubmissionBy.BloodRelation)') {
+                    $('#bloodRelationSection').slideDown(300);
+                    $('#relationType, #relationCNIC').prop('required', true);
+                } else {
+                    $('#bloodRelationSection').slideUp(300);
+                    $('#relationType, #relationCNIC').prop('required', false).val('');
+                }
+            });
+
+            // Format CNIC input
+            $('#relationCNIC').on('input', function() {
+                var value = $(this).val().replace(/\D/g, '');
+                if (value.length >= 5) {
+                    value = value.substring(0, 5) + '-' + value.substring(5);
+                }
+                if (value.length >= 13) {
+                    value = value.substring(0, 13) + '-' + value.substring(13);
+                }
+                $(this).val(value);
+            });
+
             // Validate at least one document
             $('#documentUploadForm').on('submit', function(e) {
                 var documentCount = $('.document-item').length;
@@ -203,6 +318,58 @@
                         text: 'Please upload at least one document.'
                     });
                     return false;
+                }
+
+                // Validate document submission method
+                var submissionMethod = $('#documentSubmissionMethod').val();
+                if (!submissionMethod) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Submission Method Required',
+                        text: 'Please select how you want to submit your original documents.'
+                    });
+                    return false;
+                }
+
+                // Validate submission by if physical is selected
+                if (submissionMethod == '@((int)DocAttestation.Models.DocumentSubmissionMethod.Physical)') {
+                    var submissionBy = $('#submissionBy').val();
+                    if (!submissionBy) {
+                        e.preventDefault();
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Submission By Required',
+                            text: 'Please select who will submit the documents physically.'
+                        });
+                        return false;
+                    }
+
+                    // Validate blood relation details if blood relation is selected
+                    if (submissionBy == '@((int)DocAttestation.Models.SubmissionBy.BloodRelation)') {
+                        var relationType = $('#relationType').val();
+                        var relationCNIC = $('#relationCNIC').val();
+
+                        if (!relationType) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Relation Type Required',
+                                text: 'Please select the relation type.'
+                            });
+                            return false;
+                        }
+
+                        if (!relationCNIC || relationCNIC.length < 15) {
+                            e.preventDefault();
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'CNIC Required',
+                                text: 'Please enter a valid 15-digit CNIC number.'
+                            });
+                            return false;
+                        }
+                    }
                 }
             });
         });

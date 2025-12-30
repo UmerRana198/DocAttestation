@@ -88,7 +88,11 @@ public class ApplicationService : IApplicationService
             Fee = totalFee,
             TimeSlot = null, // Will be assigned after submission and payment
             Status = ApplicationStatus.Draft,
-            SubmittedAt = DateTime.UtcNow
+            SubmittedAt = DateTime.UtcNow,
+            DocumentSubmissionMethod = dto.DocumentSubmissionMethod,
+            SubmissionBy = dto.SubmissionBy,
+            RelationType = dto.RelationType,
+            RelationCNIC = dto.RelationCNIC
         };
 
         _context.Applications.Add(application);

@@ -20,7 +20,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             height: 100vh;
             overflow: hidden;
@@ -29,7 +29,7 @@
             padding: 0;
             background: #f5f7fa;
         }
-        
+
         .login-wrapper {
             display: flex;
             height: 100vh;
@@ -37,7 +37,7 @@
             overflow: hidden;
             background: #ffffff;
         }
-        
+
         .login-left {
             flex: 0 0 45%;
             position: relative;
@@ -49,50 +49,51 @@
             max-height: 100vh;
             background: linear-gradient(135deg, #006633 0%, #003d1f 50%, #004d26 100%);
         }
-        
-        .login-left::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
-            opacity: 0.3;
-            pointer-events: none;
-            z-index: 1;
-        }
-        
-        .login-left::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50%;
-            background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%);
-            pointer-events: none;
-            z-index: 1;
-        }
-        
+
+            .login-left::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+                opacity: 0.3;
+                pointer-events: none;
+                z-index: 1;
+            }
+
+            .login-left::after {
+                content: '';
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                height: 50%;
+                background: linear-gradient(to top, rgba(0,0,0,0.4) 0%, transparent 100%);
+                pointer-events: none;
+                z-index: 1;
+            }
+
         .login-logo {
             position: relative;
             z-index: 2;
             margin-bottom: 2rem;
             animation: fadeInDown 0.8s ease;
         }
-        
+
         @@keyframes fadeInDown {
             from {
                 opacity: 0;
                 transform: translateY(-20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         .login-logo img {
             max-width: 350px;
             width: 100%;
@@ -103,11 +104,11 @@
             box-shadow: 0 10px 40px rgba(0,0,0,0.2);
             transition: transform 0.3s ease;
         }
-        
-        .login-logo img:hover {
-            transform: scale(1.05);
-        }
-        
+
+            .login-logo img:hover {
+                transform: scale(1.05);
+            }
+
         .welcome-text {
             color: white;
             position: relative;
@@ -116,18 +117,19 @@
             padding-bottom: 0;
             animation: fadeInUp 0.8s ease 0.2s both;
         }
-        
+
         @@keyframes fadeInUp {
             from {
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-        
+
         .welcome-text h1 {
             font-size: 3rem;
             font-weight: 800;
@@ -137,7 +139,7 @@
             letter-spacing: -1px;
             color: white;
         }
-        
+
         .welcome-text h2 {
             font-size: 1.75rem;
             font-weight: 500;
@@ -147,14 +149,14 @@
             margin-bottom: 0.5rem;
             color: white;
         }
-        
+
         .welcome-text p {
             font-size: 1.1rem;
             opacity: 0.9;
             text-shadow: 0 2px 8px rgba(0,0,0,0.2);
             color: white;
         }
-        
+
         .login-right {
             flex: 0 0 55%;
             background: #ffffff;
@@ -166,66 +168,71 @@
             max-height: 100vh;
             position: relative;
         }
-        
-        .login-right::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #006633 0%, #004d26 100%);
-        }
-        
+
+            .login-right::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 4px;
+                background: linear-gradient(90deg, #006633 0%, #004d26 100%);
+            }
+
         .login-form-container {
             width: 100%;
             max-width: 450px;
             animation: fadeIn 0.6s ease;
             margin: 0 auto;
         }
-        
+
         @@keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
-        
+
         .login-form-container::-webkit-scrollbar {
             width: 6px;
         }
-        
+
         .login-form-container::-webkit-scrollbar-track {
             background: #f1f1f1;
         }
-        
+
         .login-form-container::-webkit-scrollbar-thumb {
             background: #006633;
             border-radius: 3px;
         }
-        
+
         .login-form-header {
             margin-bottom: 1.5rem;
             text-align: center;
         }
-        
-        .login-form-header h2 {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: #003d1f;
-            margin-bottom: 0.25rem;
-            letter-spacing: -0.5px;
-        }
-        
-        .login-form-header p {
-            color: #718096;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        
+
+            .login-form-header h2 {
+                font-size: 1.75rem;
+                font-weight: 700;
+                color: #003d1f;
+                margin-bottom: 0.25rem;
+                letter-spacing: -0.5px;
+            }
+
+            .login-form-header p {
+                color: #718096;
+                font-size: 0.875rem;
+                font-weight: 500;
+            }
+
         .form-group-wrapper {
             position: relative;
             margin-bottom: 0.875rem;
         }
-        
+
         .form-label {
             font-weight: 600;
             color: #2d3748;
@@ -235,16 +242,16 @@
             align-items: center;
             gap: 0.4rem;
         }
-        
-        .form-label i {
-            color: #006633;
-            font-size: 0.95rem;
-        }
-        
+
+            .form-label i {
+                color: #006633;
+                font-size: 0.95rem;
+            }
+
         .input-wrapper {
             position: relative;
         }
-        
+
         .input-icon {
             position: absolute;
             left: 0.75rem;
@@ -255,7 +262,7 @@
             pointer-events: none;
             transition: color 0.3s ease;
         }
-        
+
         .form-control {
             border: 1.5px solid #e2e8f0;
             border-radius: 6px;
@@ -266,53 +273,53 @@
             color: #2d3748;
             width: 100%;
         }
-        
-        .form-control:focus {
-            border-color: #006633;
-            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
-            outline: none;
-            background: #ffffff;
-        }
-        
-        .form-control:focus + .input-icon {
-            color: #006633;
-        }
-        
-        .form-control::placeholder {
-            color: #a0aec0;
-            font-size: 0.85rem;
-        }
-        
+
+            .form-control:focus {
+                border-color: #006633;
+                box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+                outline: none;
+                background: #ffffff;
+            }
+
+                .form-control:focus + .input-icon {
+                    color: #006633;
+                }
+
+            .form-control::placeholder {
+                color: #a0aec0;
+                font-size: 0.85rem;
+            }
+
         .form-text {
             font-size: 0.75rem;
             color: #718096;
             margin-top: 0.25rem;
             display: block;
         }
-        
+
         .forgot-password {
             text-align: right;
             margin-top: 0.25rem;
             margin-bottom: 0.875rem;
         }
-        
-        .forgot-password a {
-            color: #006633;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: color 0.2s ease;
-        }
-        
-        .forgot-password a:hover {
-            color: #004d26;
-            text-decoration: underline;
-        }
-        
+
+            .forgot-password a {
+                color: #006633;
+                text-decoration: none;
+                font-weight: 600;
+                font-size: 0.9rem;
+                transition: color 0.2s ease;
+            }
+
+                .forgot-password a:hover {
+                    color: #004d26;
+                    text-decoration: underline;
+                }
+
         .form-check {
             margin-bottom: 0.875rem;
         }
-        
+
         .form-check-input {
             width: 1.1em;
             height: 1.1em;
@@ -321,24 +328,24 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        
-        .form-check-input:checked {
-            background-color: #006633;
-            border-color: #006633;
-        }
-        
-        .form-check-input:focus {
-            border-color: #006633;
-            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
-        }
-        
+
+            .form-check-input:checked {
+                background-color: #006633;
+                border-color: #006633;
+            }
+
+            .form-check-input:focus {
+                border-color: #006633;
+                box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+            }
+
         .form-check-label {
             color: #4a5568;
             font-size: 0.875rem;
             margin-left: 0.4rem;
             cursor: pointer;
         }
-        
+
         .btn-signin {
             background: linear-gradient(135deg, #006633 0%, #004d26 100%);
             border: none;
@@ -356,39 +363,39 @@
             position: relative;
             overflow: hidden;
         }
-        
-        .btn-signin::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: left 0.5s;
-        }
-        
-        .btn-signin:hover::before {
-            left: 100%;
-        }
-        
-        .btn-signin:hover {
-            background: linear-gradient(135deg, #004d26 0%, #003d1f 100%);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 102, 51, 0.5);
-        }
-        
-        .btn-signin:active {
-            transform: translateY(0);
-        }
-        
-        .btn-signin:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
+
+            .btn-signin::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: -100%;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+                transition: left 0.5s;
+            }
+
+            .btn-signin:hover::before {
+                left: 100%;
+            }
+
+            .btn-signin:hover {
+                background: linear-gradient(135deg, #004d26 0%, #003d1f 100%);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 20px rgba(0, 102, 51, 0.5);
+            }
+
+            .btn-signin:active {
+                transform: translateY(0);
+            }
+
+            .btn-signin:disabled {
+                background: #cbd5e0;
+                cursor: not-allowed;
+                transform: none;
+                box-shadow: none;
+            }
+
         /* Alphanumeric Captcha Styles */
         .captcha-container {
             background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
@@ -398,7 +405,7 @@
             margin-bottom: 0.875rem;
             box-shadow: 0 1px 4px rgba(0,0,0,0.05);
         }
-        
+
         .captcha-title {
             display: flex;
             align-items: center;
@@ -408,19 +415,19 @@
             color: #2d3748;
             font-size: 0.875rem;
         }
-        
-        .captcha-title i {
-            color: #006633;
-            font-size: 1rem;
-        }
-        
+
+            .captcha-title i {
+                color: #006633;
+                font-size: 1rem;
+            }
+
         .captcha-image-wrapper {
             display: flex;
             align-items: center;
             gap: 0.5rem;
             margin-bottom: 0.75rem;
         }
-        
+
         .captcha-image {
             flex: 1;
             height: 50px;
@@ -430,13 +437,13 @@
             border: 1.5px solid #e2e8f0;
             box-shadow: 0 1px 4px rgba(0,0,0,0.08);
         }
-        
-        .captcha-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
+
+            .captcha-image img {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+            }
+
         .btn-refresh-captcha {
             width: 40px;
             height: 40px;
@@ -451,28 +458,28 @@
             flex-shrink: 0;
             box-shadow: 0 1px 4px rgba(0, 102, 51, 0.2);
         }
-        
-        .btn-refresh-captcha:hover {
-            background: #006633;
-            transform: rotate(180deg) scale(1.05);
-            box-shadow: 0 2px 8px rgba(0, 102, 51, 0.4);
-        }
-        
-        .btn-refresh-captcha i {
-            font-size: 1rem;
-            color: #006633;
-            transition: color 0.3s ease;
-        }
-        
-        .btn-refresh-captcha:hover i {
-            color: white;
-        }
-        
+
+            .btn-refresh-captcha:hover {
+                background: #006633;
+                transform: rotate(180deg) scale(1.05);
+                box-shadow: 0 2px 8px rgba(0, 102, 51, 0.4);
+            }
+
+            .btn-refresh-captcha i {
+                font-size: 1rem;
+                color: #006633;
+                transition: color 0.3s ease;
+            }
+
+            .btn-refresh-captcha:hover i {
+                color: white;
+            }
+
         .captcha-input-group {
             display: flex;
             gap: 0.4rem;
         }
-        
+
         .captcha-input {
             flex: 1;
             border: 1.5px solid #e2e8f0;
@@ -487,46 +494,46 @@
             background: white;
             color: #2d3748;
         }
-        
-        .captcha-input:focus {
-            border-color: #006633;
-            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
-            outline: none;
-        }
-        
-        .captcha-input::placeholder {
-            letter-spacing: normal;
-            font-weight: normal;
-            font-size: 0.9rem;
-            text-transform: none;
-            color: #a0aec0;
-        }
-        
+
+            .captcha-input:focus {
+                border-color: #006633;
+                box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+                outline: none;
+            }
+
+            .captcha-input::placeholder {
+                letter-spacing: normal;
+                font-weight: normal;
+                font-size: 0.9rem;
+                text-transform: none;
+                color: #a0aec0;
+            }
+
         .form-links {
             margin-top: 1rem;
             padding-top: 0.875rem;
             border-top: 1.5px solid #e2e8f0;
             text-align: center;
         }
-        
-        .form-links p {
-            color: #718096;
-            margin-bottom: 0.5rem;
-            font-size: 0.85rem;
-        }
-        
-        .form-links a {
-            color: #006633;
-            text-decoration: none;
-            font-weight: 600;
-            transition: color 0.2s ease;
-        }
-        
-        .form-links a:hover {
-            color: #004d26;
-            text-decoration: underline;
-        }
-        
+
+            .form-links p {
+                color: #718096;
+                margin-bottom: 0.5rem;
+                font-size: 0.85rem;
+            }
+
+            .form-links a {
+                color: #006633;
+                text-decoration: none;
+                font-weight: 600;
+                transition: color 0.2s ease;
+            }
+
+                .form-links a:hover {
+                    color: #004d26;
+                    text-decoration: underline;
+                }
+
         .alert-danger {
             border-radius: 10px;
             border: 2px solid #fc8181;
@@ -536,76 +543,76 @@
             margin-bottom: 1.5rem;
             font-size: 0.95rem;
         }
-        
+
         .text-danger {
             color: #e53e3e !important;
             font-size: 0.875rem;
             margin-top: 0.5rem;
             display: block;
         }
-        
+
         .text-muted {
             color: #718096 !important;
             font-size: 0.875rem;
         }
-        
+
         @@media (max-width: 992px) {
             .login-wrapper {
                 flex-direction: column;
             }
-            
+
             .login-left {
                 flex: 0 0 250px;
                 padding: 2rem;
             }
-            
+
             .welcome-text h1 {
                 font-size: 2rem;
             }
-            
+
             .welcome-text h2 {
                 font-size: 1.4rem;
             }
-            
+
             .login-right {
                 flex: 1;
                 padding: 2rem 1.5rem;
             }
         }
-        
+
         @@media (max-width: 768px) {
             .login-left {
                 flex: 0 0 200px;
                 padding: 1.5rem;
             }
-            
+
             .login-logo img {
                 max-width: 220px;
             }
-            
+
             .welcome-text h1 {
                 font-size: 1.75rem;
             }
-            
+
             .welcome-text h2 {
                 font-size: 1.2rem;
             }
-            
+
             .login-form-header h2 {
                 font-size: 2rem;
             }
         }
-        
+
         @@media (max-width: 576px) {
             .login-left {
                 display: none;
             }
-            
+
             .login-right {
                 flex: 1;
                 padding: 2rem 1.25rem;
             }
-            
+
             .login-form-container {
                 max-width: 100%;
             }
@@ -625,7 +632,7 @@
                 <p>Ministry of Foreign Affairs</p>
             </div>
         </div>
-        
+
         <!-- Right Side - Login Form -->
         <div class="login-right">
             <div class="login-form-container">
@@ -633,7 +640,7 @@
                     <h2>Sign In</h2>
                     <p>Document Attestation Portal - E Services</p>
                 </div>
-                
+
                 <form asp-action="Login" method="post" id="loginForm">
                     <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
@@ -679,7 +686,7 @@
                             <i class="bi bi-shield-lock-fill"></i>
                             <span>Security Verification</span>
                         </div>
-                        
+
                         <div class="captcha-image-wrapper">
                             <div class="captcha-image">
                                 <img src="@Model.CaptchaImageUrl" id="captchaImage" alt="Captcha Code" />
@@ -688,18 +695,18 @@
                                 <i class="bi bi-arrow-clockwise"></i>
                             </button>
                         </div>
-                        
+
                         <div class="captcha-input-group">
-                            <input type="text" 
-                                   asp-for="CaptchaAnswer" 
-                                   id="CaptchaAnswer" 
-                                   class="captcha-input" 
+                            <input type="text"
+                                   asp-for="CaptchaAnswer"
+                                   id="CaptchaAnswer"
+                                   class="captcha-input"
                                    placeholder="Enter code above"
                                    maxlength="5"
                                    autocomplete="off"
                                    oninput="checkCaptchaInput()" />
                         </div>
-                        
+
                         <input type="hidden" asp-for="CaptchaChallengeId" id="CaptchaChallengeId" />
                     </div>
 
@@ -707,7 +714,7 @@
                         SIGN IN
                     </button>
                 </form>
-                
+
                 <div class="form-links">
                     <p>Don't Have An Account Yet? <a asp-action="Register">Sign Up</a></p>
                     <p class="mb-0">Need Help? <a href="#" onclick="alert('Contact support for assistance.'); return false;">Go To Online Help</a></p>
@@ -719,13 +726,15 @@
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
-    
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+
     <script>
         function checkCaptchaInput() {
             const captchaInput = document.getElementById('CaptchaAnswer');
             const submitBtn = document.getElementById('submitBtn');
-            
+
             // Enable submit button when captcha has 5 characters
             if (captchaInput.value.length >= 5) {
                 submitBtn.disabled = false;
@@ -735,18 +744,18 @@
                 captchaInput.style.borderColor = '#dee2e6';
             }
         }
-        
+
         function refreshCaptcha() {
             const btn = document.querySelector('.btn-refresh-captcha');
             btn.style.transform = 'rotate(360deg)';
-            
+
             $.get('@Url.Action("GetCaptcha", "Account")', function(data) {
                 $('#captchaImage').attr('src', data.imageUrl);
                 $('#CaptchaChallengeId').val(data.challengeId);
                 $('#CaptchaAnswer').val('').focus();
                 $('#submitBtn').prop('disabled', true);
                 document.getElementById('CaptchaAnswer').style.borderColor = '#dee2e6';
-                
+
                 setTimeout(() => {
                     btn.style.transform = 'rotate(0deg)';
                 }, 300);
@@ -759,13 +768,13 @@
                 });
             });
         }
-        
+
         // Auto-uppercase and filter input
         document.getElementById('CaptchaAnswer').addEventListener('input', function(e) {
             this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
             checkCaptchaInput();
         });
-        
+
         // Enter key support
         $(document).ready(function() {
             $('#loginForm input').on('keypress', function(e) {
@@ -774,20 +783,20 @@
                     $('#loginForm').submit();
                 }
             });
-            
+
             // Debug: Log captcha values on form submit
             $('#loginForm').on('submit', function(e) {
                 var challengeId = $('#CaptchaChallengeId').val();
                 var captchaAnswer = $('#CaptchaAnswer').val();
                 console.log('Form Submit - ChallengeId:', challengeId, 'Answer:', captchaAnswer);
-                
+
                 if (!challengeId || challengeId.trim() === '') {
                     e.preventDefault();
                     alert('Error: Captcha challenge ID is missing. Please refresh the page.');
                     return false;
                 }
             });
-            
+
             // Log initial captcha values
             console.log('Initial ChallengeId:', $('#CaptchaChallengeId').val());
         });

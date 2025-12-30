@@ -27,8 +27,14 @@ public class ApplicationCreateDto
     
     // Multiple documents support
     public List<DocumentCreateDto>? Documents { get; set; }
-    
+
     public VerificationType VerificationType { get; set; } = VerificationType.Normal;
+
+    // Document Submission Method
+    public DocumentSubmissionMethod? DocumentSubmissionMethod { get; set; }
+    public SubmissionBy? SubmissionBy { get; set; }
+    public string? RelationType { get; set; }
+    public string? RelationCNIC { get; set; }
 }
 
 public class DocumentCreateDto

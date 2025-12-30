@@ -1,10 +1,17 @@
 using System.ComponentModel.DataAnnotations;
+using DocAttestation.Models;
 
 namespace DocAttestation.ViewModels;
 
 public class ProfileStep4ViewModel
 {
     public List<DocumentItem> Documents { get; set; } = new List<DocumentItem>();
+
+    // Document Submission Method
+    public DocumentSubmissionMethod? DocumentSubmissionMethod { get; set; }
+    public SubmissionBy? SubmissionBy { get; set; }
+    public string? RelationType { get; set; }
+    public string? RelationCNIC { get; set; }
     
     // Available document names for dropdown
     public static List<string> GetDocumentNames()
@@ -31,6 +38,7 @@ public class ProfileStep4ViewModel
             "Unmarried Certificate",
             "School Certificate",
             "Divorce Certificate",
+            "Divorce",
             "Domicile / NOC",
             "Police Character Certificate",
             "Guardianship Certificate",
@@ -43,9 +51,17 @@ public class ProfileStep4ViewModel
             "Affidavit",
             "Power of Attorney (Abroad)",
             "Power of Attorney (Within Pakistan)",
+            "Power of Attorney (From)",
+            "Power of Attorney (To)",
             "Passport (Additional Pages)",
             "Passport Copy",
-            "Affidavit / Sworn Statement"
+            "Affidavit / Sworn Statement",
+
+            // Legal Documents
+            "Legal Documents",
+
+            // Commercial Documents
+            "Commercial Documents"
         };
     }
     
@@ -81,6 +97,7 @@ public class ProfileStep4ViewModel
                     "Unmarried Certificate",
                     "School Certificate",
                     "Divorce Certificate",
+                    "Divorce",
                     "Domicile / NOC",
                     "Police Character Certificate",
                     "Guardianship Certificate"
@@ -97,9 +114,25 @@ public class ProfileStep4ViewModel
                     "Affidavit",
                     "Power of Attorney (Abroad)",
                     "Power of Attorney (Within Pakistan)",
+                    "Power of Attorney (From)",
+                    "Power of Attorney (To)",
                     "Passport (Additional Pages)",
                     "Passport Copy",
                     "Affidavit / Sworn Statement"
+                }
+            },
+            {
+                "Legal Documents",
+                new List<string>
+                {
+                    "Legal Documents"
+                }
+            },
+            {
+                "Commercial Documents",
+                new List<string>
+                {
+                    "Commercial Documents"
                 }
             }
         };

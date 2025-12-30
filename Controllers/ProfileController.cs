@@ -571,6 +571,31 @@ public class ProfileController : Controller
             }
         }
 
+        // Validate document submission method
+        if (!model.DocumentSubmissionMethod.HasValue)
+        {
+            ModelState.AddModelError("DocumentSubmissionMethod", "Please select a document submission method");
+        }
+
+        if (model.DocumentSubmissionMethod == DocumentSubmissionMethod.Physical && !model.SubmissionBy.HasValue)
+        {
+            ModelState.AddModelError("SubmissionBy", "Please specify who will submit the documents physically");
+        }
+
+        if (model.DocumentSubmissionMethod == DocumentSubmissionMethod.Physical &&
+            model.SubmissionBy == SubmissionBy.BloodRelation)
+        {
+            if (string.IsNullOrWhiteSpace(model.RelationType))
+            {
+                ModelState.AddModelError("RelationType", "Please specify the relation type");
+            }
+
+            if (string.IsNullOrWhiteSpace(model.RelationCNIC) || model.RelationCNIC.Length < 15)
+            {
+                ModelState.AddModelError("RelationCNIC", "Please enter a valid CNIC number");
+            }
+        }
+
         if (!ModelState.IsValid)
             return View(model);
 
@@ -628,7 +653,11 @@ public class ProfileController : Controller
                 RegistrationNumber = TempData["RegistrationNumber"]?.ToString(),
                 RollNumber = TempData["RollNumber"]?.ToString(),
                 Documents = documentDtos,
-                VerificationType = verificationType
+                VerificationType = verificationType,
+                DocumentSubmissionMethod = model.DocumentSubmissionMethod,
+                SubmissionBy = model.SubmissionBy,
+                RelationType = model.RelationType,
+                RelationCNIC = model.RelationCNIC
             };
 
             var application = await _applicationService.CreateApplicationAsync(profile.Id, applicationDto);
@@ -730,9 +759,7 @@ public class ProfileController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ProcessPayment(int applicationId, string cardNumber, 
-        string? city = null, string? documentSubmissionMethod = null, 
-        string? submissionBy = null, string? relationType = null, string? relationCNIC = null)
+    public async Task<IActionResult> ProcessPayment(int applicationId, string cardNumber, string? city = null)
     {
         try
         {
@@ -746,38 +773,18 @@ public class ProfileController : Controller
             if (application.ApplicantProfileId != profile.Id)
                 return Json(new { success = false, message = "Unauthorized" });
 
-            // Save city and document submission details
+            // Save city
             if (!string.IsNullOrEmpty(city))
             {
                 application.City = city;
             }
-            
-            if (!string.IsNullOrEmpty(documentSubmissionMethod) && int.TryParse(documentSubmissionMethod, out int methodValue))
+
+            // Generate TCS number if TCS is selected (document submission method is already set in Step4)
+            if (application.DocumentSubmissionMethod == DocumentSubmissionMethod.TCS)
             {
-                application.DocumentSubmissionMethod = (DocumentSubmissionMethod)methodValue;
-                
-                // If TCS is selected, generate TCS number after payment
-                if (application.DocumentSubmissionMethod == DocumentSubmissionMethod.TCS)
-                {
-                    // Generate unique TCS number: TCS + ApplicationNumber + timestamp
-                    var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
-                    application.TCSNumber = $"TCS{application.ApplicationNumber.Replace("-", "")}{timestamp.Substring(timestamp.Length - 6)}";
-                }
-            }
-            
-            if (!string.IsNullOrEmpty(submissionBy) && int.TryParse(submissionBy, out int submissionValue))
-            {
-                application.SubmissionBy = (SubmissionBy)submissionValue;
-            }
-            
-            if (!string.IsNullOrEmpty(relationType))
-            {
-                application.RelationType = relationType;
-            }
-            
-            if (!string.IsNullOrEmpty(relationCNIC))
-            {
-                application.RelationCNIC = relationCNIC;
+                // Generate unique TCS number: TCS + ApplicationNumber + timestamp
+                var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+                application.TCSNumber = $"TCS{application.ApplicationNumber.Replace("-", "")}{timestamp.Substring(timestamp.Length - 6)}";
             }
 
             // Create payment record
