@@ -39,8 +39,16 @@ public class ApplicationCreateDto
 
 public class DocumentCreateDto
 {
-    public string DocumentName { get; set; } = null!;
-    public string DocumentPath { get; set; } = null!;
-    public string DocumentHash { get; set; } = null!;
-}
+    public string DocumentName { get; set; } = string.Empty;
 
+    // Front and back document paths
+    public string? FrontDocumentPath { get; set; }
+    public string? FrontDocumentHash { get; set; }
+
+    public string? BackDocumentPath { get; set; }
+    public string? BackDocumentHash { get; set; }
+
+    // For backward compatibility with single document upload
+    public string? DocumentPath { get; set; }
+    public string? DocumentHash { get; set; }
+}

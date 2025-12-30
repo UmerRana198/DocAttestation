@@ -4,6 +4,7 @@
     ViewBag.CurrentStep = 3;
     var documentNames = DocAttestation.ViewModels.ProfileStep3ViewModel.GetDocumentNames();
     var groupedDocumentNames = DocAttestation.ViewModels.ProfileStep3ViewModel.GetGroupedDocumentNames();
+    var physicalOnlyDocuments = DocAttestation.ViewModels.ProfileStep3ViewModel.GetPhysicalOnlyDocuments();
     var isEditMode = ViewBag.IsEditMode == true;
 }
 
@@ -89,6 +90,11 @@
                     <hr class="my-4" />
 
                     <!-- City and Document Submission Method in One Row -->
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Note:</strong> Divorce, Power of Attorney (from/to), Legal Documents, Affidavit, and Commercial Documents require physical presence at the office. Other documents can be submitted via Courier Service.
+                    </div>
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
@@ -96,7 +102,7 @@
                                 <select asp-for="City" class="form-select" required>
                                     <option value="">-- Select City --</option>
                                     @{
-                                        var cities = new[] { "Karachi", "Lahore", "Islamabad", "Rawalpindi", "Faisalabad", "Multan", "Peshawar", "Quetta", "Sialkot", "Gujranwala", "Hyderabad", "Other" };
+                                        var cities = new[] { "Islamabad", "Karachi", "Lahore", "Gujrat","Peshawar","Quetta" };
                                     }
                                     @foreach (var cityOption in cities)
                                     {
@@ -106,13 +112,99 @@
                                 <span asp-validation-for="City" class="text-danger"></span>
                             </div>
                         </div>
+
+                    <hr class="my-4" />
+
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i> You can upload up to 5 documents. Fee will be calculated per document based on verification type selected above.
+                    </div>
+
+                    <div id="documentsContainer">
+                        @if (Model.Documents == null || Model.Documents.Count == 0)
+                        {
+                            Model.Documents = new List<DocAttestation.ViewModels.DocumentItem> { new DocAttestation.ViewModels.DocumentItem() };
+                        }
+                        
+                        @for (int i = 0; i < Model.Documents.Count; i++)
+                        {
+                            <div class="document-item card mb-3" data-index="@i">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h6 class="mb-0">Document @(i + 1)</h6>
+                                        @if (i > 0)
+                                        {
+                                            <button type="button" class="btn btn-sm btn-danger remove-document" data-index="@i">
+                                                <i class="bi bi-trash"></i> Remove
+                                            </button>
+                                        }
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Document Name <span class="text-danger">*</span></label>
+                                                <select name="Documents[@i].DocumentName" class="form-select document-name-select" required>
+                                                    <option value="">-- Select Document Name --</option>
+                                                    @foreach (var group in groupedDocumentNames)
+                                                    {
+                                                        <optgroup label="@group.Key">
+                                                            @foreach (var docName in group.Value)
+                                                            {
+                                                                <option value="@docName" selected="@(Model.Documents[i].DocumentName == docName)">@docName</option>
+                                                            }
+                                                        </optgroup>
+                                                    }
+                                                </select>
+                                                <span asp-validation-for="Documents[i].DocumentName" class="text-danger"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Upload Front Side (PDF)</label>
+                                                <input type="file" name="Documents[@i].FrontDocument" class="form-control document-file-input" accept=".pdf" />
+                                                <span asp-validation-for="Documents[i].FrontDocument" class="text-danger"></span>
+                                                <small class="form-text text-muted">Maximum size: 10MB</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <label class="form-label">Upload Back Side (PDF)</label>
+                                                <input type="file" name="Documents[@i].BackDocument" class="form-control document-file-input" accept=".pdf" />
+                                                <span asp-validation-for="Documents[i].BackDocument" class="text-danger"></span>
+                                                <small class="form-text text-muted">Maximum size: 10MB</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group mb-3">
+                                                <div class="alert alert-info mb-0 py-2">
+                                                    <small class="text-muted">Upload both front and back sides of your document. Both sides are required.</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="mb-3">
+                        <button type="button" class="btn btn-outline-primary" id="addDocumentBtn" @(Model.Documents.Count >= 5 ? "disabled" : "")>
+                            <i class="bi bi-plus-circle"></i> Add Another Document (@Model.Documents.Count / 5)
+                        </button>
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <!-- Document Submission Method Section (moved below document upload) -->
+                    <div class="row mb-3">
                         <div class="col-md-6">
                             <div class="form-group">
                                 <label asp-for="DocumentSubmissionMethod" class="form-label">Original Document Submission <span class="text-danger">*</span></label>
                                 <select asp-for="DocumentSubmissionMethod" class="form-select" id="documentSubmissionMethod" required>
                                     <option value="">-- Select Method --</option>
                                     <option value="0" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.Physical)">Physical</option>
-                                    <option value="1" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS)">TCS (Courier Service)</option>
+                                    <option value="1" selected="@(Model.DocumentSubmissionMethod == DocAttestation.Models.DocumentSubmissionMethod.TCS)">Courier Service</option>
                                 </select>
                                 <span asp-validation-for="DocumentSubmissionMethod" class="text-danger"></span>
                             </div>
@@ -184,84 +276,20 @@
                                 <label asp-for="RelationCNIC" class="form-label">Relation CNIC Number <span class="text-danger">*</span></label>
                                 @if (Model.SubmissionBy == DocAttestation.Models.SubmissionBy.BloodRelation)
                                 {
-                                    <input type="text" asp-for="RelationCNIC" class="form-control" id="relationCNIC" 
-                                           placeholder="Enter CNIC without dashes (e.g., 4123456789123)" 
+                                    <input type="text" asp-for="RelationCNIC" class="form-control" id="relationCNIC"
+                                           placeholder="Enter CNIC without dashes (e.g., 4123456789123)"
                                            maxlength="13" pattern="[0-9]{13}" required />
                                 }
                                 else
                                 {
-                                    <input type="text" asp-for="RelationCNIC" class="form-control" id="relationCNIC" 
-                                           placeholder="Enter CNIC without dashes (e.g., 4123456789123)" 
+                                    <input type="text" asp-for="RelationCNIC" class="form-control" id="relationCNIC"
+                                           placeholder="Enter CNIC without dashes (e.g., 4123456789123)"
                                            maxlength="13" pattern="[0-9]{13}" />
                                 }
                                 <small class="text-muted">Enter 13-digit CNIC number without dashes</small>
                                 <span asp-validation-for="RelationCNIC" class="text-danger"></span>
                             </div>
                         </div>
-                    </div>
-
-                    <hr class="my-4" />
-
-                    <div class="alert alert-info mb-4">
-                        <i class="bi bi-info-circle"></i> You can upload up to 5 documents. Fee will be calculated per document based on verification type selected above.
-                    </div>
-
-                    <div id="documentsContainer">
-                        @if (Model.Documents == null || Model.Documents.Count == 0)
-                        {
-                            Model.Documents = new List<DocAttestation.ViewModels.DocumentItem> { new DocAttestation.ViewModels.DocumentItem() };
-                        }
-                        
-                        @for (int i = 0; i < Model.Documents.Count; i++)
-                        {
-                            <div class="document-item card mb-3" data-index="@i">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <h6 class="mb-0">Document @(i + 1)</h6>
-                                        @if (i > 0)
-                                        {
-                                            <button type="button" class="btn btn-sm btn-danger remove-document" data-index="@i">
-                                                <i class="bi bi-trash"></i> Remove
-                                            </button>
-                                        }
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label class="form-label">Document Name <span class="text-danger">*</span></label>
-                                                <select name="Documents[@i].DocumentName" class="form-select document-name-select" required>
-                                                    <option value="">-- Select Document Name --</option>
-                                                    @foreach (var group in groupedDocumentNames)
-                                                    {
-                                                        <optgroup label="@group.Key">
-                                                            @foreach (var docName in group.Value)
-                                                            {
-                                                                <option value="@docName" selected="@(Model.Documents[i].DocumentName == docName)">@docName</option>
-                                                            }
-                                                        </optgroup>
-                                                    }
-                                                </select>
-                                                <span asp-validation-for="Documents[i].DocumentName" class="text-danger"></span>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label class="form-label">Upload Document (PDF) <span class="text-danger">*</span></label>
-                                                <input type="file" name="Documents[@i].Document" class="form-control document-file-input" accept=".pdf" required />
-                                                <span asp-validation-for="Documents[i].Document" class="text-danger"></span>
-                                                <small class="form-text text-muted">Maximum size: 10MB</small>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="mb-3">
-                        <button type="button" class="btn btn-outline-primary" id="addDocumentBtn" @(Model.Documents.Count >= 5 ? "disabled" : "")>
-                            <i class="bi bi-plus-circle"></i> Add Another Document (@Model.Documents.Count / 5)
-                        </button>
                     </div>
 
                     <div class="form-group mt-4">
@@ -285,6 +313,7 @@
             var maxDocuments = 5;
             var documentNames = @Html.Raw(Json.Serialize(documentNames));
             var groupedDocumentNames = @Html.Raw(Json.Serialize(groupedDocumentNames));
+            var physicalOnlyDocuments = @Html.Raw(Json.Serialize(physicalOnlyDocuments));
             
             // Handle Document Submission Method change
             $('#documentSubmissionMethod').on('change', function() {
@@ -304,6 +333,14 @@
                     $('#relationCNIC').val('');
                 }
             });
+
+            // Handle document name changes
+            $(document).on('change', '.document-name-select', function() {
+                updateSubmissionMethodOptions();
+            });
+
+            // Initialize submission method options on page load
+            updateSubmissionMethodOptions();
             
             // Handle Submission By change
             $('#submissionBy').on('change', function() {
@@ -377,9 +414,25 @@
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-group mb-3">
-                                        <label class="form-label">Upload Document (PDF) <span class="text-danger">*</span></label>
-                                        <input type="file" name="Documents[${index}].Document" class="form-control document-file-input" accept=".pdf" required />
+                                        <label class="form-label">Upload Front Side (PDF)</label>
+                                        <input type="file" name="Documents[${index}].FrontDocument" class="form-control document-file-input" accept=".pdf" />
                                         <small class="form-text text-muted">Maximum size: 10MB</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label class="form-label">Upload Back Side (PDF)</label>
+                                        <input type="file" name="Documents[${index}].BackDocument" class="form-control document-file-input" accept=".pdf" />
+                                        <small class="form-text text-muted">Maximum size: 10MB</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <div class="alert alert-info mb-0 py-2">
+                                            <small class="text-muted">Upload both front and back sides of your document. Both sides are required.</small>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -389,6 +442,7 @@
                 
                 $('#documentsContainer').append(html);
                 updateAddButton();
+                updateSubmissionMethodOptions();
             });
             
             // Remove document
@@ -397,6 +451,7 @@
                 $(this).closest('.document-item').remove();
                 reindexDocuments();
                 updateAddButton();
+                updateSubmissionMethodOptions();
             });
             
             // Reindex documents after removal
@@ -418,6 +473,54 @@
                     $('#addDocumentBtn').prop('disabled', true);
                 } else {
                     $('#addDocumentBtn').prop('disabled', false);
+                }
+            }
+
+            // Check if any selected documents require physical submission only
+            function hasPhysicalOnlyDocuments() {
+                var selectedDocuments = [];
+                $('.document-name-select').each(function() {
+                    var value = $(this).val();
+                    if (value) {
+                        selectedDocuments.push(value);
+                    }
+                });
+
+                for (var i = 0; i < selectedDocuments.length; i++) {
+                    if (physicalOnlyDocuments.includes(selectedDocuments[i])) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            // Update submission method options based on selected documents
+            function updateSubmissionMethodOptions() {
+                var requiresPhysical = hasPhysicalOnlyDocuments();
+                var $courierOption = $('#documentSubmissionMethod option[value="1"]');
+                var $bloodRelationOption = $('#submissionBy option[value="1"]');
+
+                if (requiresPhysical) {
+                    // Disable Courier option
+                    $courierOption.prop('disabled', true).hide();
+                    // Force physical selection
+                    $('#documentSubmissionMethod').val('0');
+                    $('#submissionByWrapper').show();
+                    $('#submissionBy').prop('required', true);
+
+                    // For restricted documents, disable Blood Relation option
+                    $bloodRelationOption.prop('disabled', true).hide();
+                    // Force "By Yourself" selection
+                    $('#submissionBy').val('0');
+                    $('#bloodRelationTypeWrapper').hide();
+                    $('#bloodRelationCNICSection').hide();
+                    $('#relationType').prop('required', false);
+                    $('#relationCNIC').prop('required', false);
+                } else {
+                    // Enable Courier option
+                    $courierOption.prop('disabled', false).show();
+                    // Re-enable Blood Relation option
+                    $bloodRelationOption.prop('disabled', false).show();
                 }
             }
             

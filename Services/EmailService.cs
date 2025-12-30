@@ -195,7 +195,7 @@ public class EmailService : IEmailService
         }
         else
         {
-            submissionMethod = "TCS (Courier Service)";
+            submissionMethod = "Courier Service";
         }
         
         var submittedBy = application.SubmissionBy == SubmissionBy.ByYourself ? "By Yourself" : 
@@ -206,12 +206,12 @@ public class EmailService : IEmailService
         {
             tcsInfo = $@"
                 <tr>
-                    <td style=""padding: 10px; border-bottom: 1px solid #e0e0e0;""><strong>TCS Tracking Number:</strong></td>
+                    <td style=""padding: 10px; border-bottom: 1px solid #e0e0e0;""><strong>Courier Tracking Number:</strong></td>
                     <td style=""padding: 10px; border-bottom: 1px solid #e0e0e0;"">{application.TCSNumber}</td>
                 </tr>
                 <tr>
                     <td colspan=""2"" style=""padding: 10px; color: #666; font-size: 12px;"">
-                        Please use this tracking number to track your document shipment via TCS.
+                        Please use this tracking number to track your document shipment via courier service.
                     </td>
                 </tr>";
         }
@@ -263,9 +263,9 @@ public class EmailService : IEmailService
         {
             documentSubmissionInstructions = $@"
                 <div style=""background-color: #e3f2fd; border-left: 4px solid #2196f3; padding: 15px; margin: 20px 0; border-radius: 4px;"">
-                    <h3 style=""margin: 0 0 10px 0; color: #1565c0;"">📦 Document Submission via TCS</h3>
+                    <h3 style=""margin: 0 0 10px 0; color: #1565c0;"">📦 Document Submission via Courier Service</h3>
                     <p style=""margin: 5px 0; color: #0d47a1;"">
-                        Please send your original documents via TCS courier service using the tracking number provided above.
+                        Please send your original documents via courier service using the tracking number provided above.
                     </p>
                     <p style=""margin: 5px 0; color: #0d47a1;"">
                         Make sure to include a copy of this payment receipt with your documents.

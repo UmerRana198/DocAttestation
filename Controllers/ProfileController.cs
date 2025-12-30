@@ -275,7 +275,7 @@ public class ProfileController : Controller
                 ViewBag.IsEditMode = true;
             }
         }
-        
+
         if (model.Documents == null || model.Documents.Count == 0)
         {
             ModelState.AddModelError("", "Please upload at least one document");
@@ -286,32 +286,67 @@ public class ProfileController : Controller
         // Validate all documents
         var allowedExtensions = new[] { ".pdf" };
         var maxFileSize = 10 * 1024 * 1024; // 10MB
-        
+
         for (int i = 0; i < model.Documents.Count; i++)
         {
             var doc = model.Documents[i];
-            
+
             if (string.IsNullOrWhiteSpace(doc.DocumentName))
             {
                 ModelState.AddModelError($"Documents[{i}].DocumentName", "Document name is required");
             }
-            
-            if (doc.Document == null || doc.Document.Length == 0)
+
+            // Check if both front and back documents are uploaded
+            bool hasFrontDocument = doc.FrontDocument != null && doc.FrontDocument.Length > 0;
+            bool hasBackDocument = doc.BackDocument != null && doc.BackDocument.Length > 0;
+
+            if (!hasFrontDocument || !hasBackDocument)
             {
-                ModelState.AddModelError($"Documents[{i}].Document", "Please upload a document");
+                ModelState.AddModelError($"Documents[{i}].FrontDocument", "Please upload both front and back sides of the document");
                 continue;
             }
 
-            var extension = Path.GetExtension(doc.Document.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
+            // Validate front document
+            if (hasFrontDocument)
             {
-                ModelState.AddModelError($"Documents[{i}].Document", "Only PDF files are allowed");
+                var frontExtension = Path.GetExtension(doc.FrontDocument.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(frontExtension))
+                {
+                    ModelState.AddModelError($"Documents[{i}].FrontDocument", "Only PDF files are allowed for front side");
+                }
+
+                if (doc.FrontDocument.Length > maxFileSize)
+                {
+                    ModelState.AddModelError($"Documents[{i}].FrontDocument", "Front side file size must be less than 10MB");
+                }
             }
 
-            if (doc.Document.Length > maxFileSize)
+            // Validate back document
+            if (hasBackDocument)
             {
-                ModelState.AddModelError($"Documents[{i}].Document", "File size must be less than 10MB");
+                var backExtension = Path.GetExtension(doc.BackDocument.FileName).ToLowerInvariant();
+                if (!allowedExtensions.Contains(backExtension))
+                {
+                    ModelState.AddModelError($"Documents[{i}].BackDocument", "Only PDF files are allowed for back side");
+                }
+
+                if (doc.BackDocument.Length > maxFileSize)
+                {
+                    ModelState.AddModelError($"Documents[{i}].BackDocument", "Back side file size must be less than 10MB");
+                }
             }
+        }
+
+        // Check if any selected documents require physical submission only
+        if (model.HasPhysicalOnlyDocuments() && model.DocumentSubmissionMethod != DocumentSubmissionMethod.Physical)
+        {
+            ModelState.AddModelError("DocumentSubmissionMethod", "Selected documents require physical submission at the office");
+        }
+
+        // For physical-only documents, only "By Yourself" is allowed
+        if (model.HasPhysicalOnlyDocuments() && model.SubmissionBy == SubmissionBy.BloodRelation)
+        {
+            ModelState.AddModelError("SubmissionBy", "Restricted documents can only be submitted by yourself, not through blood relation");
         }
 
         if (!ModelState.IsValid)
@@ -325,44 +360,37 @@ public class ProfileController : Controller
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var profile = await GetOrCreateProfileAsync(userId!);
 
-            // Check if editing existing application - check both TempData and form data
+            // Check if editing existing application
             int? editingApplicationId = null;
-            
-            // First check form data (more reliable)
+
             if (Request.Form["EditingApplicationId"].Count > 0 && int.TryParse(Request.Form["EditingApplicationId"], out int formAppId))
             {
                 editingApplicationId = formAppId;
             }
-            // Fallback to TempData
             else if (TempData["EditingApplicationId"] != null)
             {
                 editingApplicationId = Convert.ToInt32(TempData["EditingApplicationId"]);
             }
-            
+
             Application? application = null;
             bool isEditing = false;
 
-            // Check if we're editing an existing application
             if (editingApplicationId.HasValue)
             {
-                // Try to get existing application - validate it exists and is editable
                 var existingApplication = await _applicationService.GetApplicationByIdAsync(editingApplicationId.Value);
-                
-                if (existingApplication != null && 
-                    existingApplication.ApplicantProfileId == profile.Id && 
+
+                if (existingApplication != null &&
+                    existingApplication.ApplicantProfileId == profile.Id &&
                     existingApplication.Status == ApplicationStatus.Draft)
                 {
-                    // Valid application to edit
                     application = existingApplication;
                     isEditing = true;
-                    
-                    // Keep TempData for potential return to view
+
                     TempData["EditingApplicationId"] = editingApplicationId.Value;
                     TempData.Keep("EditingApplicationId");
                 }
                 else
                 {
-                    // Invalid application - clear edit mode and create new
                     TempData.Remove("EditingApplicationId");
                     editingApplicationId = null;
                     isEditing = false;
@@ -374,34 +402,66 @@ public class ProfileController : Controller
             var uploadsPath = Path.Combine(_environment.WebRootPath, "uploads", "documents");
             Directory.CreateDirectory(uploadsPath);
 
-            // Save all documents
+            // Save all documents (both front and back)
             foreach (var doc in model.Documents)
             {
-                if (doc.Document == null || doc.Document.Length == 0)
+                // Skip if both documents are missing
+                if ((doc.FrontDocument == null || doc.FrontDocument.Length == 0) &&
+                    (doc.BackDocument == null || doc.BackDocument.Length == 0))
                     continue;
 
-                var fileName = $"{userId}_{Guid.NewGuid()}.pdf";
-                var filePath = Path.Combine(uploadsPath, fileName);
+                string? frontFileName = null;
+                string? frontFilePath = null;
+                string? frontDocumentHash = null;
 
-                using (var stream = new FileStream(filePath, FileMode.Create))
+                string? backFileName = null;
+                string? backFilePath = null;
+                string? backDocumentHash = null;
+
+                // Save front document
+                if (doc.FrontDocument != null && doc.FrontDocument.Length > 0)
                 {
-                    await doc.Document.CopyToAsync(stream);
+                    frontFileName = $"{userId}_front_{Guid.NewGuid()}.pdf";
+                    frontFilePath = Path.Combine(uploadsPath, frontFileName);
+
+                    using (var stream = new FileStream(frontFilePath, FileMode.Create))
+                    {
+                        await doc.FrontDocument.CopyToAsync(stream);
+                    }
+
+                    frontDocumentHash = _pdfStampingService.ComputeFileHash(frontFilePath);
                 }
 
-                // Compute hash
-                var documentHash = _pdfStampingService.ComputeFileHash(filePath);
+                // Save back document
+                if (doc.BackDocument != null && doc.BackDocument.Length > 0)
+                {
+                    backFileName = $"{userId}_back_{Guid.NewGuid()}.pdf";
+                    backFilePath = Path.Combine(uploadsPath, backFileName);
+
+                    using (var stream = new FileStream(backFilePath, FileMode.Create))
+                    {
+                        await doc.BackDocument.CopyToAsync(stream);
+                    }
+
+                    backDocumentHash = _pdfStampingService.ComputeFileHash(backFilePath);
+                }
 
                 documentDtos.Add(new DocumentCreateDto
                 {
                     DocumentName = doc.DocumentName,
-                    DocumentPath = filePath,
-                    DocumentHash = documentHash
+                    FrontDocumentPath = frontFilePath,
+                    FrontDocumentHash = frontDocumentHash,
+                    BackDocumentPath = backFilePath,
+                    BackDocumentHash = backDocumentHash,
+                    // For backward compatibility
+                    DocumentPath = frontFilePath,
+                    DocumentHash = frontDocumentHash
                 });
             }
 
             if (documentDtos.Count == 0)
             {
-                ModelState.AddModelError("", "Please upload at least one document");
+                ModelState.AddModelError("", "Please upload at least one document with both front and back sides.");
                 PreserveEditMode();
                 return View(model);
             }
@@ -409,18 +469,30 @@ public class ProfileController : Controller
             if (isEditing && application != null)
             {
                 // UPDATE EXISTING APPLICATION
-                // Delete old documents
                 var oldDocuments = await _context.ApplicationDocuments
                     .Where(d => d.ApplicationId == application.Id)
                     .ToListAsync();
-                
+
                 foreach (var oldDoc in oldDocuments)
                 {
-                    // Delete file if exists
-                    if (System.IO.File.Exists(oldDoc.DocumentPath))
+                    // Delete front document file
+                    if (!string.IsNullOrEmpty(oldDoc.FrontDocumentPath) && System.IO.File.Exists(oldDoc.FrontDocumentPath))
+                    {
+                        try { System.IO.File.Delete(oldDoc.FrontDocumentPath); } catch { }
+                    }
+
+                    // Delete back document file
+                    if (!string.IsNullOrEmpty(oldDoc.BackDocumentPath) && System.IO.File.Exists(oldDoc.BackDocumentPath))
+                    {
+                        try { System.IO.File.Delete(oldDoc.BackDocumentPath); } catch { }
+                    }
+
+                    // Delete old document file (backward compatibility)
+                    if (!string.IsNullOrEmpty(oldDoc.DocumentPath) && System.IO.File.Exists(oldDoc.DocumentPath))
                     {
                         try { System.IO.File.Delete(oldDoc.DocumentPath); } catch { }
                     }
+
                     _context.ApplicationDocuments.Remove(oldDoc);
                 }
 
@@ -432,31 +504,31 @@ public class ProfileController : Controller
                 application.SubmissionBy = model.SubmissionBy;
                 application.RelationType = model.RelationType;
                 application.RelationCNIC = model.RelationCNIC;
-                
+
                 // Recalculate fee
                 decimal baseFeePerDocument = model.VerificationType == VerificationType.Normal ? 500m : 1500m;
                 application.Fee = baseFeePerDocument * documentDtos.Count;
-                
-                // If fee changed, clear existing payments (user needs to pay new amount)
+
+                // If fee changed, clear existing payments
                 if (oldFee != application.Fee && application.Payments.Any())
                 {
                     var payments = await _context.Payments
                         .Where(p => p.ApplicationId == application.Id)
                         .ToListAsync();
-                    
+
                     foreach (var payment in payments)
                     {
                         _context.Payments.Remove(payment);
                     }
                 }
-                
-                // Clear time slot - will be reassigned after submission and payment
+
+                // Clear time slot
                 application.TimeSlot = null;
 
-                // Use first document for backward compatibility
+                // Use first document's front for backward compatibility
                 var firstDocument = documentDtos.First();
-                application.OriginalDocumentPath = firstDocument.DocumentPath;
-                application.DocumentHash = firstDocument.DocumentHash;
+                application.OriginalDocumentPath = firstDocument.FrontDocumentPath;
+                application.DocumentHash = firstDocument.FrontDocumentHash;
 
                 await _context.SaveChangesAsync();
 
@@ -467,11 +539,16 @@ public class ProfileController : Controller
                     {
                         ApplicationId = application.Id,
                         DocumentName = docDto.DocumentName,
-                        DocumentPath = docDto.DocumentPath,
-                        DocumentHash = docDto.DocumentHash,
+                        FrontDocumentPath = docDto.FrontDocumentPath,
+                        FrontDocumentHash = docDto.FrontDocumentHash,
+                        BackDocumentPath = docDto.BackDocumentPath,
+                        BackDocumentHash = docDto.BackDocumentHash,
+                        // For backward compatibility
+                        DocumentPath = docDto.FrontDocumentPath ?? string.Empty,
+                        DocumentHash = docDto.FrontDocumentHash ?? string.Empty,
                         UploadedAt = DateTime.UtcNow
                     };
-                    
+
                     _context.ApplicationDocuments.Add(applicationDocument);
                 }
 
@@ -479,22 +556,21 @@ public class ProfileController : Controller
             }
             else
             {
-                // CREATE NEW APPLICATION (not editing)
-                // Create application with default values for removed fields
+                // CREATE NEW APPLICATION
                 var applicationDto = new ApplicationCreateDto
                 {
-                    DocumentType = "Document", // Default value
-                    IssuingAuthority = "N/A", // Default value
-                    Year = DateTime.Now.Year, // Current year as default
+                    DocumentType = "Document",
+                    IssuingAuthority = "N/A",
+                    Year = DateTime.Now.Year,
                     RegistrationNumber = null,
                     RollNumber = null,
-                    Documents = documentDtos, // Use already processed documents
+                    Documents = documentDtos,
                     VerificationType = model.VerificationType
                 };
 
                 application = await _applicationService.CreateApplicationAsync(profile.Id, applicationDto);
-                
-                // Update application with City, DocumentSubmissionMethod, SubmissionBy, RelationType, and RelationCNIC
+
+                // Update application with additional fields
                 application.City = model.City;
                 application.DocumentSubmissionMethod = model.DocumentSubmissionMethod;
                 application.SubmissionBy = model.SubmissionBy;
@@ -503,7 +579,7 @@ public class ProfileController : Controller
                 await _context.SaveChangesAsync();
             }
 
-            profile.CurrentStep = 4; // Step 3 is now the last step before review
+            profile.CurrentStep = 4;
             profile.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
@@ -519,10 +595,12 @@ public class ProfileController : Controller
         {
             _logger.LogError(ex, "Error saving Step 3");
             ModelState.AddModelError("", "An error occurred. Please try again.");
+            PreserveEditMode();
             return View(model);
         }
     }
 
+    // REMOVE OR UPDATE Step4 - it's now merged into Step3
     [HttpGet]
     public IActionResult Step4()
     {
@@ -534,148 +612,8 @@ public class ProfileController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Step4(ProfileStep4ViewModel model)
     {
-        if (model.Documents == null || model.Documents.Count == 0)
-        {
-            ModelState.AddModelError("", "Please upload at least one document");
-            return View(model);
-        }
-
-        // Validate all documents
-        var allowedExtensions = new[] { ".pdf" };
-        var maxFileSize = 10 * 1024 * 1024; // 10MB
-        
-        for (int i = 0; i < model.Documents.Count; i++)
-        {
-            var doc = model.Documents[i];
-            
-            if (string.IsNullOrWhiteSpace(doc.DocumentName))
-            {
-                ModelState.AddModelError($"Documents[{i}].DocumentName", "Document name is required");
-            }
-            
-            if (doc.Document == null || doc.Document.Length == 0)
-            {
-                ModelState.AddModelError($"Documents[{i}].Document", "Please upload a document");
-                continue;
-            }
-
-            var extension = Path.GetExtension(doc.Document.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
-            {
-                ModelState.AddModelError($"Documents[{i}].Document", "Only PDF files are allowed");
-            }
-
-            if (doc.Document.Length > maxFileSize)
-            {
-                ModelState.AddModelError($"Documents[{i}].Document", "File size must be less than 10MB");
-            }
-        }
-
-        // Validate document submission method
-        if (!model.DocumentSubmissionMethod.HasValue)
-        {
-            ModelState.AddModelError("DocumentSubmissionMethod", "Please select a document submission method");
-        }
-
-        if (model.DocumentSubmissionMethod == DocumentSubmissionMethod.Physical && !model.SubmissionBy.HasValue)
-        {
-            ModelState.AddModelError("SubmissionBy", "Please specify who will submit the documents physically");
-        }
-
-        if (model.DocumentSubmissionMethod == DocumentSubmissionMethod.Physical &&
-            model.SubmissionBy == SubmissionBy.BloodRelation)
-        {
-            if (string.IsNullOrWhiteSpace(model.RelationType))
-            {
-                ModelState.AddModelError("RelationType", "Please specify the relation type");
-            }
-
-            if (string.IsNullOrWhiteSpace(model.RelationCNIC) || model.RelationCNIC.Length < 15)
-            {
-                ModelState.AddModelError("RelationCNIC", "Please enter a valid CNIC number");
-            }
-        }
-
-        if (!ModelState.IsValid)
-            return View(model);
-
-        try
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var profile = await GetOrCreateProfileAsync(userId!);
-
-            // Prepare document DTOs
-            var documentDtos = new List<DocumentCreateDto>();
-            var uploadsPath = Path.Combine(_environment.WebRootPath, "uploads", "documents");
-            Directory.CreateDirectory(uploadsPath);
-
-            // Save all documents
-            foreach (var doc in model.Documents)
-            {
-                if (doc.Document == null || doc.Document.Length == 0)
-                    continue;
-
-                var fileName = $"{userId}_{Guid.NewGuid()}.pdf";
-                var filePath = Path.Combine(uploadsPath, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await doc.Document.CopyToAsync(stream);
-                }
-
-                // Compute hash
-                var documentHash = _pdfStampingService.ComputeFileHash(filePath);
-
-                documentDtos.Add(new DocumentCreateDto
-                {
-                    DocumentName = doc.DocumentName,
-                    DocumentPath = filePath,
-                    DocumentHash = documentHash
-                });
-            }
-
-            if (documentDtos.Count == 0)
-            {
-                ModelState.AddModelError("", "Please upload at least one document");
-                return View(model);
-            }
-
-            // Create application
-            var verificationType = TempData["VerificationType"] != null 
-                ? (VerificationType)Convert.ToInt32(TempData["VerificationType"])
-                : VerificationType.Normal;
-
-            var applicationDto = new ApplicationCreateDto
-            {
-                DocumentType = TempData["DocumentType"]?.ToString()!,
-                IssuingAuthority = TempData["IssuingAuthority"]?.ToString()!,
-                Year = Convert.ToInt32(TempData["Year"]),
-                RegistrationNumber = TempData["RegistrationNumber"]?.ToString(),
-                RollNumber = TempData["RollNumber"]?.ToString(),
-                Documents = documentDtos,
-                VerificationType = verificationType,
-                DocumentSubmissionMethod = model.DocumentSubmissionMethod,
-                SubmissionBy = model.SubmissionBy,
-                RelationType = model.RelationType,
-                RelationCNIC = model.RelationCNIC
-            };
-
-            var application = await _applicationService.CreateApplicationAsync(profile.Id, applicationDto);
-
-            profile.CurrentStep = 4;
-            profile.UpdatedAt = DateTime.UtcNow;
-
-            await _context.SaveChangesAsync();
-
-            TempData["ApplicationId"] = application.Id;
-            return RedirectToAction("Step5");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error saving Step 4");
-            ModelState.AddModelError("", "An error occurred. Please try again.");
-            return View(model);
-        }
+        // This method should be removed or redirected since Step4 is now merged into Step3
+        return RedirectToAction("Step3");
     }
 
     [HttpGet]
@@ -757,6 +695,22 @@ public class ProfileController : Controller
         return profile;
     }
 
+    private bool HasWritePermission(string path)
+    {
+        try
+        {
+            // Try to create a test file
+            var testFile = Path.Combine(path, "test_write.tmp");
+            System.IO.File.WriteAllText(testFile, "test");
+            System.IO.File.Delete(testFile);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ProcessPayment(int applicationId, string cardNumber, string? city = null)
@@ -779,10 +733,10 @@ public class ProfileController : Controller
                 application.City = city;
             }
 
-            // Generate TCS number if TCS is selected (document submission method is already set in Step4)
+            // Generate courier tracking number if courier service is selected (document submission method is already set in Step4)
             if (application.DocumentSubmissionMethod == DocumentSubmissionMethod.TCS)
             {
-                // Generate unique TCS number: TCS + ApplicationNumber + timestamp
+                // Generate unique tracking number: TCS + ApplicationNumber + timestamp
                 var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
                 application.TCSNumber = $"TCS{application.ApplicationNumber.Replace("-", "")}{timestamp.Substring(timestamp.Length - 6)}";
             }

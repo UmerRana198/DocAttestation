@@ -7,8 +7,19 @@ public class ApplicationDocument
     
     // Document Information
     public string DocumentName { get; set; } = null!; // Name selected from dropdown
+
+    // Document files - support for front/back or single document
+    public string? FrontDocumentPath { get; set; } // File path for front side
+    public string? FrontDocumentHash { get; set; } // SHA256 hash for front side
+    public string? BackDocumentPath { get; set; } // File path for back side
+    public string? BackDocumentHash { get; set; } // SHA256 hash for back side
+    public string? SingleDocumentPath { get; set; } // File path for single document (backward compatibility)
+    public string? SingleDocumentHash { get; set; } // SHA256 hash for single document (backward compatibility)
+
+    // For backward compatibility - maps to SingleDocumentPath
     public string DocumentPath { get; set; } = null!; // File path
     public string DocumentHash { get; set; } = null!; // SHA256 hash
+
     public string? StampedDocumentPath { get; set; }
     public string? StampedDocumentHash { get; set; }
     

@@ -105,11 +105,17 @@ public class ApplicationService : IApplicationService
             {
                 ApplicationId = application.Id,
                 DocumentName = docDto.DocumentName,
+                FrontDocumentPath = docDto.FrontDocumentPath,
+                FrontDocumentHash = docDto.FrontDocumentHash,
+                BackDocumentPath = docDto.BackDocumentPath,
+                BackDocumentHash = docDto.BackDocumentHash,
+               
+                // For backward compatibility
                 DocumentPath = docDto.DocumentPath,
                 DocumentHash = docDto.DocumentHash,
                 UploadedAt = DateTime.UtcNow
             };
-            
+
             _context.ApplicationDocuments.Add(applicationDocument);
         }
 

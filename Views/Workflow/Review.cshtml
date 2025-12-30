@@ -204,7 +204,7 @@
             <div class="tab-pane fade" id="documents" role="tabpanel" aria-labelledby="documents-tab">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-primary">
-                        <h5 class="mb-0 text-white"><i class="bi bi-file-pdf"></i> Review Documents (@(Model.Documents != null && Model.Documents.Any() ? Model.Documents.Count : 0))</h5>
+                        <h5 class="mb-0 text-white"><i class="bi bi-file-pdf"></i> Review Documents (@(Model.Documents != null && Model.Documents.Any() ? Model.Documents.Sum(d => (!string.IsNullOrEmpty(d.FrontDocumentPath) ? 1 : 0) + (!string.IsNullOrEmpty(d.BackDocumentPath) ? 1 : 0) + (string.IsNullOrEmpty(d.FrontDocumentPath) && string.IsNullOrEmpty(d.BackDocumentPath) && !string.IsNullOrEmpty(d.DocumentPath) ? 1 : 0)) : 0))</h5>
                     </div>
                     <div class="card-body">
                         @if (Model.Documents != null && Model.Documents.Any())
@@ -241,20 +241,80 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="form-group mb-3">
                                                     <label class="form-label fw-bold">Document Name</label>
                                                     <p class="mb-0">@doc.DocumentName</p>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <div class="form-group mb-3">
-                                                    <label class="form-label">Document Hash</label>
-                                                    <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
-                                                    <small class="text-muted">SHA256 hash for verification</small>
+                                        </div>
+
+                                        <!-- Front Document Section -->
+                                        @if (!string.IsNullOrEmpty(doc.FrontDocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label"><i class="bi bi-file-earmark-text"></i> Front Side Hash</label>
+                                                        <input type="text" class="form-control form-control-sm" value="@doc.FrontDocumentHash" readonly />
+                                                        <small class="text-muted">SHA256 hash for verification</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Front Side Document</label>
+                                                        <a href="@Url.Action("ViewApplicationDocument", "Workflow", new { documentId = doc.Id, type = "front" })" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Front Document
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        }
+
+                                        <!-- Back Document Section -->
+                                        @if (!string.IsNullOrEmpty(doc.BackDocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label"><i class="bi bi-file-earmark-text"></i> Back Side Hash</label>
+                                                        <input type="text" class="form-control form-control-sm" value="@doc.BackDocumentHash" readonly />
+                                                        <small class="text-muted">SHA256 hash for verification</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Back Side Document</label>
+                                                        <a href="@Url.Action("ViewApplicationDocument", "Workflow", new { documentId = doc.Id, type = "back" })" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Back Document
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Backward Compatibility: Single Document -->
+                                        @if (string.IsNullOrEmpty(doc.FrontDocumentPath) && string.IsNullOrEmpty(doc.BackDocumentPath) && !string.IsNullOrEmpty(doc.DocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Document Hash</label>
+                                                        <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
+                                                        <small class="text-muted">SHA256 hash for verification</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Document</label>
+                                                        <a href="@Url.Action("ViewApplicationDocument", "Workflow", new { documentId = doc.Id, type = "single" })" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Document
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+
                                         @if (doc.Status != DocAttestation.Models.DocumentStatus.Pending && doc.VerifiedAt.HasValue)
                                         {
                                             <div class="alert alert-@(doc.Status == DocAttestation.Models.DocumentStatus.Approved ? "success" : doc.Status == DocAttestation.Models.DocumentStatus.Rejected ? "danger" : "warning") mb-3">
@@ -269,15 +329,14 @@
                                                 }
                                             </div>
                                         }
+
+                                        <!-- Action Buttons Row -->
                                         <div class="row">
                                             <div class="col-md-12">
                                                 <div class="d-flex gap-2">
-                                                    <a href="@Url.Action("ViewApplicationDocument", "Workflow", new { documentId = doc.Id })" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                        <i class="bi bi-eye"></i> View Document
-                                                    </a>
                                                     @if (!isApprovedView && doc.Status == DocAttestation.Models.DocumentStatus.Pending)
                                                     {
-                                                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#verifyDocumentModal" data-document-id="@doc.Id" data-document-name="@doc.DocumentName">
+                                                        <button type="button" class="btn btn-outline-success btn-sm verify-document-btn" data-document-id="@doc.Id" data-document-name="@doc.DocumentName">
                                                             <i class="bi bi-check-circle"></i> Verify
                                                         </button>
                                                     }
@@ -422,93 +481,36 @@
     </div>
 </div>
 
-<!-- Document Verification Modal -->
-<div class="modal fade" id="verifyDocumentModal" tabindex="-1" aria-labelledby="verifyDocumentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="verifyDocumentModalLabel">
-                    <i class="bi bi-check-circle"></i> Verify Document
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Document:</label>
-                    <p class="mb-0" id="modalDocumentName"></p>
-                </div>
-                <div class="mb-3">
-                    <label for="documentRemarks" class="form-label">Comments / Remarks <span class="text-danger">*</span></label>
-                    <textarea id="documentRemarks" class="form-control" rows="4" placeholder="Enter your comments or remarks about this document..." required></textarea>
-                    <small class="text-muted">Remarks are required for Reject action</small>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="approveDocumentBtn">
-                    <i class="bi bi-check-circle"></i> Approve
-                </button>
-                <button type="button" class="btn btn-danger" id="rejectDocumentBtn">
-                    <i class="bi bi-x-circle"></i> Reject
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
 @section Scripts {
     <script>
         $(document).ready(function() {
-            let currentDocumentId = null;
-            
-            // Document Verification Modal
-            $('#verifyDocumentModal').on('show.bs.modal', function(event) {
-                const button = $(event.relatedTarget);
-                currentDocumentId = button.data('document-id');
+            // Document Verification - Direct approval without modal
+            $('.verify-document-btn').click(function() {
+                const button = $(this);
+                const documentId = button.data('document-id');
                 const documentName = button.data('document-name');
-                $('#modalDocumentName').text(documentName);
-                $('#documentRemarks').val('');
-            });
-            
-            // Document Approve
-            $('#approveDocumentBtn').click(function() {
-                const remarks = $('#documentRemarks').val();
-                if (!currentDocumentId) return;
-                submitDocumentAction('approve', currentDocumentId, remarks);
-            });
-            
-            // Document Reject
-            $('#rejectDocumentBtn').click(function() {
-                const remarks = $('#documentRemarks').val();
-                if (!currentDocumentId) return;
-                if (!remarks || remarks.trim() === '') {
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Remarks Required',
-                        text: 'Please provide remarks when rejecting a document'
-                    });
-                    return;
-                }
-                submitDocumentAction('reject', currentDocumentId, remarks);
-            });
-            
-            function submitDocumentAction(action, documentId, remarks) {
+
                 Swal.fire({
-                    title: 'Confirm Action',
-                    text: `Are you sure you want to ${action} this document?`,
+                    title: 'Confirm Document Verification',
+                    text: `Are you sure you want to verify and approve "${documentName}"?`,
                     icon: 'question',
                     showCancelButton: true,
-                    confirmButtonText: 'Yes',
+                    confirmButtonText: 'Yes, Verify',
                     cancelButtonText: 'Cancel'
                 }).then((result) => {
                     if (result.isConfirmed) {
+                        // Show loading state
+                        button.prop('disabled', true);
+                        button.html('<i class="bi bi-hourglass-split"></i> Verifying...');
+
                         $.ajax({
                             url: '@Url.Action("VerifyDocument", "Workflow")',
                             method: 'POST',
                             data: {
                                 documentId: documentId,
-                                action: action,
-                                remarks: remarks
+                                action: 'approve',
+                                remarks: 'Auto-approved during verification'
                             },
                             headers: {
                                 'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
@@ -517,31 +519,40 @@
                                 if (response.success) {
                                     Swal.fire({
                                         icon: 'success',
-                                        title: 'Success',
-                                        text: response.message
+                                        title: 'Document Verified',
+                                        text: response.message,
+                                        timer: 2000,
+                                        showConfirmButton: false
                                     }).then(() => {
-                                        $('#verifyDocumentModal').modal('hide');
                                         window.location.reload();
                                     });
                                 } else {
+                                    // Reset button state
+                                    button.prop('disabled', false);
+                                    button.html('<i class="bi bi-check-circle"></i> Verify');
+
                                     Swal.fire({
                                         icon: 'error',
-                                        title: 'Error',
+                                        title: 'Verification Failed',
                                         text: response.message
                                     });
                                 }
                             },
                             error: function() {
+                                // Reset button state
+                                button.prop('disabled', false);
+                                button.html('<i class="bi bi-check-circle"></i> Verify');
+
                                 Swal.fire({
                                     icon: 'error',
                                     title: 'Error',
-                                    text: 'An error occurred. Please try again.'
+                                    text: 'An error occurred during verification. Please try again.'
                                 });
                             }
                         });
                     }
                 });
-            }
+            });
             
             // Application-level actions
             $('#approveBtn').click(function() {

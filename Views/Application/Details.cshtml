@@ -346,7 +346,7 @@
             <div class="content-section" id="documents-section" style="display: none;">
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-primary">
-                        <h5 class="mb-0 text-white">Attached Documents (@(Model.Documents != null && Model.Documents.Any() ? Model.Documents.Count : 0))</h5>
+                        <h5 class="mb-0 text-white">Attached Documents (@(Model.Documents != null && Model.Documents.Any() ? Model.Documents.Sum(d => (!string.IsNullOrEmpty(d.FrontDocumentPath) ? 1 : 0) + (!string.IsNullOrEmpty(d.BackDocumentPath) ? 1 : 0) + (string.IsNullOrEmpty(d.FrontDocumentPath) && string.IsNullOrEmpty(d.BackDocumentPath) && !string.IsNullOrEmpty(d.DocumentPath) ? 1 : 0)) : 0))</h5>
                     </div>
                     <div class="card-body">
                         @if (Model.Documents != null && Model.Documents.Any())
@@ -365,35 +365,91 @@
                                     </div>
                                     <div class="card-body">
                                         <div class="row">
-                                            <div class="col-md-6">
+                                            <div class="col-md-12">
                                                 <div class="form-group mb-3">
                                                     <label class="form-label fw-bold">Document Name</label>
                                                     <p class="mb-0">@doc.DocumentName</p>
                                                 </div>
                                             </div>
-                                            <div class="col-md-6">
-                                                <div class="form-group mb-3">
-                                                    <label class="form-label">Document Hash</label>
-                                                    <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
-                                                    <small class="text-muted">SHA256 hash for verification</small>
+                                        </div>
+
+                                        <!-- Front Document Section -->
+                                        @if (!string.IsNullOrEmpty(doc.FrontDocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label"><i class="bi bi-file-earmark-text"></i> Front Side Hash</label>
+                                                        <input type="text" class="form-control form-control-sm" value="@doc.FrontDocumentHash" readonly />
+                                                        <small class="text-muted">SHA256 hash for verification</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Front Side Document</label>
+                                                        <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" asp-route-type="front" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Front Document
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="row">
-                                            <div class="col-md-12">
-                                                <div class="d-flex gap-2">
-                                                    <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                        <i class="bi bi-eye"></i> View Document
-                                                    </a>
-                                                    @if (!string.IsNullOrEmpty(doc.StampedDocumentPath))
-                                                    {
-                                                        <span class="badge bg-success align-self-center">
-                                                            <i class="bi bi-check-circle"></i> Stamped
-                                                        </span>
-                                                    }
+                                        }
+
+                                        <!-- Back Document Section -->
+                                        @if (!string.IsNullOrEmpty(doc.BackDocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label"><i class="bi bi-file-earmark-text"></i> Back Side Hash</label>
+                                                        <input type="text" class="form-control form-control-sm" value="@doc.BackDocumentHash" readonly />
+                                                        <small class="text-muted">SHA256 hash for verification</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Back Side Document</label>
+                                                        <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" asp-route-type="back" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Back Document
+                                                        </a>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                        }
+
+                                        <!-- Backward Compatibility: Single Document -->
+                                        @if (string.IsNullOrEmpty(doc.FrontDocumentPath) && string.IsNullOrEmpty(doc.BackDocumentPath) && !string.IsNullOrEmpty(doc.DocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Document Hash</label>
+                                                        <input type="text" class="form-control form-control-sm" value="@doc.DocumentHash" readonly />
+                                                        <small class="text-muted">SHA256 hash for verification</small>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <div class="form-group mb-3">
+                                                        <label class="form-label">Document</label>
+                                                        <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" asp-route-type="single" target="_blank" class="btn btn-outline-primary btn-sm">
+                                                            <i class="bi bi-eye"></i> View Document
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        <!-- Stamp Status -->
+                                        @if (!string.IsNullOrEmpty(doc.StampedDocumentPath))
+                                        {
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <span class="badge bg-success">
+                                                        <i class="bi bi-check-circle"></i> Stamped
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             }

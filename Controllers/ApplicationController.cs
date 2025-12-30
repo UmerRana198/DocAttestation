@@ -84,7 +84,7 @@ public class ApplicationController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> ViewApplicationDocument(int documentId)
+    public async Task<IActionResult> ViewApplicationDocument(int documentId, string? type = null)
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var profile = await _context.ApplicantProfiles
@@ -100,9 +100,31 @@ public class ApplicationController : Controller
         if (document == null || document.Application.ApplicantProfileId != profile.Id)
             return NotFound();
 
-        if (System.IO.File.Exists(document.DocumentPath))
+        // Determine which file path to use based on type parameter
+        string? filePath = null;
+        switch (type?.ToLower())
         {
-            var fileBytes = await System.IO.File.ReadAllBytesAsync(document.DocumentPath);
+            case "front":
+                filePath = document.FrontDocumentPath;
+                break;
+            case "back":
+                filePath = document.BackDocumentPath;
+                break;
+            case "single":
+                filePath = document.SingleDocumentPath ?? document.DocumentPath;
+                break;
+            default:
+                // Default: try front first, then back, then single
+                filePath = document.FrontDocumentPath ??
+                          document.BackDocumentPath ??
+                          document.SingleDocumentPath ??
+                          document.DocumentPath;
+                break;
+        }
+
+        if (!string.IsNullOrEmpty(filePath) && System.IO.File.Exists(filePath))
+        {
+            var fileBytes = await System.IO.File.ReadAllBytesAsync(filePath);
             return File(fileBytes, "application/pdf");
         }
 

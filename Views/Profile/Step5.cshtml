@@ -198,9 +198,42 @@
                                                 </div>
                                                 <div class="row">
                                                     <div class="col-md-12">
-                                                        <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                            <i class="bi bi-eye"></i> View Document
-                                                        </a>
+                                                        <div class="mb-2">
+                                                            <strong>Document Attachments:</strong>
+                                                            @if (!string.IsNullOrEmpty(doc.FrontDocumentPath))
+                                                            {
+                                                                <span class="badge bg-success me-1">Front Side</span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(doc.BackDocumentPath))
+                                                            {
+                                                                <span class="badge bg-info me-1">Back Side</span>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(doc.SingleDocumentPath))
+                                                            {
+                                                                <span class="badge bg-secondary">Single Document</span>
+                                                            }
+                                                        </div>
+
+                                                        <div class="btn-group-sm" role="group">
+                                                            @if (!string.IsNullOrEmpty(doc.FrontDocumentPath))
+                                                            {
+                                                                <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" asp-route-type="front" target="_blank" class="btn btn-outline-success btn-sm me-1">
+                                                                    <i class="bi bi-eye"></i> Front
+                                                                </a>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(doc.BackDocumentPath))
+                                                            {
+                                                                <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" asp-route-type="back" target="_blank" class="btn btn-outline-info btn-sm me-1">
+                                                                    <i class="bi bi-eye"></i> Back
+                                                                </a>
+                                                            }
+                                                            @if (!string.IsNullOrEmpty(doc.SingleDocumentPath))
+                                                            {
+                                                                <a asp-controller="Application" asp-action="ViewApplicationDocument" asp-route-documentId="@doc.Id" asp-route-type="single" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                                                    <i class="bi bi-eye"></i> View
+                                                                </a>
+                                                            }
+                                                        </div>
                                                         <small class="text-muted d-block mt-2">Uploaded on: @doc.UploadedAt.ToString("dd MMM yyyy HH:mm")</small>
                                                     </div>
                                                 </div>
@@ -210,26 +243,8 @@
                                 }
                                 else
                                 {
-                                    <!-- Backward compatibility: show single document -->
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label class="form-label">Uploaded Document</label>
-                                                <div>
-                                                    <a asp-controller="Application" asp-action="ViewDocument" asp-route-id="@Model.Id" target="_blank" class="btn btn-outline-primary btn-sm">
-                                                        <i class="bi bi-eye"></i> View Document
-                                                    </a>
-                                                    <small class="text-muted d-block mt-2">Click to view the uploaded PDF document</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group mb-3">
-                                                <label class="form-label">Document Hash</label>
-                                                <input type="text" class="form-control" value="@Model.DocumentHash" readonly />
-                                                <small class="text-muted">SHA256 hash for verification</small>
-                                            </div>
-                                        </div>
+                                    <div class="alert alert-info">
+                                        <i class="bi bi-info-circle"></i> No documents were uploaded in Step 3. Please go back to Step 3 to upload your documents.
                                     </div>
                                 }
                             </div>
